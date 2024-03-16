@@ -1,0 +1,50 @@
+{
+    "name": "thunder-construct-libraries",
+    "version": "0.0.0",
+    "description": "CDK Constructs to initiate an App on CDK and AppConfig",
+    "main": "lib/index.js",
+    "types": "lib/index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/thunder-so/construct-libraries.git",
+        "directory": "application"
+    },
+    "author": {
+        "name": "CloudBits, Inc.",
+        "url": "https://www.thunder.so",
+        "organization": true
+    },
+    "license": "Apache-2.0",
+    "scripts": {
+        "build": "tsc -b .",
+        "lint": "eslint -c ../eslintrc.yml --ext=.js,.ts . && tslint --project .",
+        "lint-fix": "eslint -c ../eslintrc.yml --ext=.js,.ts --fix .",
+        "test": "jest --coverage",
+        "clean": "tsc -b --clean",
+        "watch": "tsc -b -w"
+    },
+    "dependencies": {
+        "@aws-solutions-constructs/core": "latest",
+        "@aws-solutions-constructs/resources": "latest",
+        "constructs": "^10.3.0"
+    },
+    "devDependencies": {
+        "@types/jest": "^29.5.12",
+        "@types/node": "^20.11.28",
+        "aws-cdk-lib": "2.133.0",
+        "constructs": "^10.3.0"
+    },
+    "peerDependencies": {
+        "@aws-solutions-constructs/core": "latest",
+        "@aws-solutions-constructs/resources": "latest",
+        "aws-cdk-lib": "2.133.0",
+        "constructs": "^10.0.0"
+    },
+    "keywords": [
+        "aws",
+        "cdk",
+        "awscdk",
+        "AWS Solutions Constructs",
+        "AWS AppConfig"
+    ]
+}
