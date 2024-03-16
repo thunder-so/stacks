@@ -1,14 +1,29 @@
-# Welcome to your CDK TypeScript project
+# Static Site Generators on AWS S3 and CloudFront
 
-This is a blank project for CDK development with TypeScript.
+This is a TypeScript CDK project which provisions infrastructure.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+Create an `.env` file in the root directory.
 
-## Useful commands
+```sh
+ACCOUNT=YOUR_AWS_ACCOUNT_ID
+REGION=us-east-1
+APPLICATION_NAME=mogambo
+ENVIRONMENT_NAME=preview
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
+SOURCE_OWNER=vuejs
+SOURCE_REPO=vitepress 
+SOURCE_BRANCH_OR_REF=main 
+
+BUILD_RUNTIME=nodejs18.x 
+BUILD_INSTALLCMD=npm install
+BUILD_BUILDCMD=npm run build:docs 
+BUILD_OUTPUTDIR=docs/.vitepress/dist
+```
+
+Make sure the Github repository is public.
+
+## CDK commands
+
 * `npx cdk deploy`  deploy this stack to your default AWS account/region
 * `npx cdk diff`    compare deployed stack with current state
 * `npx cdk synth`   emits the synthesized CloudFormation template
