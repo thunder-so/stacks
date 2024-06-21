@@ -1,10 +1,9 @@
 import { Stack, StackProps, CfnOutput } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { CloudFrontToS3 } from '@aws-solutions-constructs/aws-cloudfront-s3';
-
-import { ApplicationConstruct } from '../../construct-libraries/application/lib';
-import { EnvironmentConstruct } from '../../construct-libraries/environment/lib';
-import { PipelineConstruct } from '../../construct-libraries/pipeline-s3/lib';
+import { ApplicationConstruct } from '../../constructs/application/lib';
+import { EnvironmentConstruct } from '../../constructs/environment/lib';
+import { PipelineConstruct } from '../../constructs/build/lib';
 
 export interface SsgStackProps extends StackProps {
   applicationName: string;
