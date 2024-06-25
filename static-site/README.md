@@ -13,35 +13,35 @@ Easily deploy static site generators and client-only SPA (single page applicatio
 
 You need an [AWS account](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/) to create and deploy the required resources for the site on AWS.
 
-This package uses the npm package manager and is an ESM module.
+This package uses the `npm` package manager and is an ES Module.
 
 ## Installation
 
 Install the package and its required dependencies:
 
 ```bash
-npm install -g thunder-so/stacks --dev
+npm install -g thunder-so/stacks --save-dev
 ```
 
 If you do not have already, your `package.json` must also contain `aws-cdk-lib` and `ts-node`:
 ```bash
-npm install aws-cdk-lib ts-node --dev
+npm install aws-cdk-lib ts-node --save-dev
 ```
 
 ## Setup
 
 1. Login into the AWS console and note the `Account ID`. You will need it in the configuration step.
 
-2. Run the following command to automatically create the required CDK stack entrypoint at `stack/index.ts`. This file defines the config how the Nuxt app will be deployed via CDK. You should adapt the file to the project's needs, especially the props `env.account` (setup step 1).
+2. Run the following command to automatically create the required CDK stack entrypoint at `stack/index.ts`. This file defines the config how the app will be deployed via CDK. You should adapt the file to the project's needs, especially the props `env.account` (setup step 1).
 
 
 ```bash
-npx staticsite-init 
+npx static-site-init 
 ```
 The executable file can be found at
 
 ```bash
-node_modules/.bin/staticsite-init
+node_modules/.bin/static-site-init
 ```
 
 ### Manage Domain with Route53 (Optional)
@@ -57,7 +57,7 @@ This is required to provide the app via HTTPS on the public internet. Take note 
 > The certificate must be issued in `us-east-1` *(global)* regardless of the region used for the app itself as it will be attached to the Cloudfront distribution which works globally.
 
 
-### Enable Automatic Deployments (Optional)
+### Enable Automatic Deployments
 
 1. [Create a Github Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for your Github account. This token must be kept secure.
 
@@ -284,7 +284,7 @@ The `StaticSiteStack` construct can be configured via the following props:
 
 ## Deployment
 
-After the installation and the setup you are already good to go to build the Nuxt app and to deploy it to AWS with this package by following the steps below:
+After the installation and the setup you are already good to go to build the app and to deploy it to AWS with this package by following the steps below:
 
 ### 1. Bootstrap CDK
 
@@ -298,16 +298,15 @@ See https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html for details.
 
 ### 2. Build and Deploy
 
-By running the following script, the Nuxt app will be built automatically via `yarn build` 
-and the CDK stack will be deployed to AWS.
+By running the following script, the app will be built automatically via `npm build` and the CDK stack will be deployed to AWS.
 
 ```bash
-npx staticsite-deploy
+npx static-site-deploy
 ```
 The executable file:
 
 ```bash
-node_modules/.bin/staticsite-deploy
+node_modules/.bin/static-site-deploy
 ```
 
 Alternatively, you can run the following commands separately to customize the deployment process:
@@ -322,11 +321,11 @@ If you want to destroy the stack and all its resources (including storage, e.g.,
 
 
 ```bash
-npx staticsite-destroy
+npx static-site-destroy
 ```
 The executable file:
 ```bash
-node_modules/.bin/staticsite-destroy
+node_modules/.bin/static-site-destroy
 ```
 
 ## Reference: Created AWS Resources
@@ -348,12 +347,12 @@ The following AWS resources will be created by this stack:
 
 
 - [Lambda](https://aws.amazon.com/lambda/):
-    - A Lambda function that deletes the outdated static assets of the Nuxt app from S3.
+    - A Lambda function that deletes the outdated static assets of the app from S3.
 
 - [EventBridge](https://aws.amazon.com/eventbridge/):
-    - A scheduled rule to trigger the cleanup Lambda function for deleting the outdated static assets of the Nuxt app from S3 every tuesday at 03:30 AM GMT.
+    - A scheduled rule to trigger the cleanup Lambda function for deleting the outdated static assets of the app from S3 every tuesday at 03:30 AM GMT.
 
-- [Athena](https://aws.amazon.com/athena/): A database and table to analyze the access logs of the Nuxt app's CloudFront distribution. Only created if `enableAccessLogsAnalysis` is set to `true`.
+- [Athena](https://aws.amazon.com/athena/): A database and table to analyze the access logs of the app's CloudFront distribution. Only created if `enableAccessLogsAnalysis` is set to `true`.
 
 - AppConfig Application and Environment.
 
@@ -391,19 +390,17 @@ const appStackProps: StaticSiteProps = {
 
   // Auto deployment
   // - create a Github personal access token
-  // - store in Parameter Store
+  // - store in Parameter Store (SecureString)
   githubAccessTokenArn: 'arn:aws:ssm:us-east-1:123456789012:parameter/github-token',
-
 
   // Either provide a buildspec.yml file OR leave empty and fill out buildProps
   buildSpecFilePath: './buildspec.yml',
   buildProps: {
-    runtime: 20; // nodejs version
-    installcmd: string;
-    buildcmd: string;
-    outputDir: string;
-  }
-
+    runtime: 20, // nodejs version
+    installcmd: string,
+    buildcmd: string,
+    outputDir: string
+  },
 
   // Optional: Domain settings
   // - create a hosted zone for your domain

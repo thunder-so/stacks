@@ -52,7 +52,7 @@ export class PipelineConstruct extends Construct {
   /**
    * The commit reference hash
    */
-  public commitRef: string;
+  public commitId: string;
 
   /**
    * The build output bucket
@@ -80,11 +80,12 @@ export class PipelineConstruct extends Construct {
     // Define the lambda function for syncing buckets
     this.syncBucketsFunction = new Function(this, 'SyncBucketsFunction', {
       runtime: Runtime.NODEJS_20_X,
-      handler: 'index.handler',
-      code: Code.fromAsset('../functions/sync-buckets.js'),
+      handler: 'sync.handler',
+      code: Code.fromAsset('../functions/sync.js'),
       environment: {
+        PIPELINE_NAME: this.codePipeline.pipelineName,
         OUTPUT_BUCKET: this.buildOutputBucket.bucketName,
-        COMMIT_ID: this.commitRef,
+        COMMIT_ID: this.commitId,
         HOSTING_BUCKET: props.HostingBucket.bucketName,
       },
     });
@@ -134,20 +135,20 @@ export class PipelineConstruct extends Construct {
             phases: {
                 install: {
                     'runtime-versions': {
-                        nodejs: props.buildProps.runtime
+                        nodejs: props.buildProps?.runtime
                     },
                     commands: [ 
                       // 'aws cloudfront create-invalidation --distribution-id ${CLOUDFRONT_ID} --paths "/*"',
-                      props.buildProps.installcmd 
+                      props.buildProps?.installcmd 
                     ]
                 },
                 build: {
-                    commands: [ props.buildProps.buildcmd ],
+                    commands: [ props.buildProps?.buildcmd ],
                 },
             },
             artifacts: {
                 files: ['**/*'],
-                'base-directory': props.buildProps.outputDir,
+                'base-directory': props.buildProps?.outputDir,
                 bucket: this.buildOutputBucket.bucketName
             }
         }),
@@ -246,7 +247,7 @@ export class PipelineConstruct extends Construct {
       actions: [sourceAction],
     });
 
-    this.commitRef = sourceAction.variables.commitId;
+    this.commitId = sourceAction.variables.commitId;
 
     // Build Step
     const buildAction = new CodeBuildAction({

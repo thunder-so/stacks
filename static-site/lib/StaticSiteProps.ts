@@ -41,7 +41,7 @@ export interface StaticSiteProps extends StackProps {
      * Optional. If you provide a buildSpec file, skip this.
      */
     readonly buildProps?: {
-      runtime: string;
+      runtime: number;
       installcmd: string;
       buildcmd: string;
       outputDir: string;
@@ -60,7 +60,7 @@ export interface StaticSiteProps extends StackProps {
     /**
      * Optional. The ARN of the certificate to use on CloudFront for the app to make it accessible via HTTPS.
      */
-    readonly globalCertificateArn?: string;
+    readonly globalCertificateArn: string;
   
     /**
      * Optional. The ID of the hosted zone to create a DNS record for the specified domain.
