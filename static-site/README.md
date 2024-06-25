@@ -19,10 +19,14 @@ This package uses the npm package manager and is an ESM module.
 
 Install the package and its required dependencies:
 
-```
-npm install thunder-so/stacks --dev
+```bash
+npm install -g thunder-so/stacks --dev
 ```
 
+If you do not have already, your `package.json` must also contain `aws-cdk-lib` and `ts-node`:
+```bash
+npm install aws-cdk-lib ts-node --dev
+```
 
 ## Setup
 
@@ -32,12 +36,12 @@ npm install thunder-so/stacks --dev
 
 
 ```bash
-npx cdk-staticsite-init 
+npx staticsite-init 
 ```
 The executable file can be found at
 
 ```bash
-node_modules/.bin/cdk-staticsite-init
+node_modules/.bin/staticsite-init
 ```
 
 ### Manage Domain with Route53 (Optional)
@@ -53,6 +57,23 @@ This is required to provide the app via HTTPS on the public internet. Take note 
 > The certificate must be issued in `us-east-1` *(global)* regardless of the region used for the app itself as it will be attached to the Cloudfront distribution which works globally.
 
 
+### Enable Automatic Deployments (Optional)
+
+1. [Create a Github Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for your Github account. This token must be kept secure.
+
+2. [Create a Parameter Store parameter (SecureString)](https://docs.aws.amazon.com/kms/latest/developerguide/services-parameter-store.html) with the Personal Access Token you created earlier. Note the `ARN` of the parameter. E.g. `arn:aws:ssm:<REGION_NAME>:<ACCOUNT_ID>:parameter/<parameter-name>`.
+
+3. Input the noted `ARN` to the `githubAccessTokenArn` field in your stack.
+
+
+### Custom `buildspec.yml` and CloudFront Functions (Optional)
+
+1. [Build specification reference for CodeBuild](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html) 
+
+2. [CloudFront Functions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-functions.html) are used for URL rewriting.
+
+>[!HINT]
+> Check out the resources from [cloudfront-hosting-toolkit](https://github.com/awslabs/cloudfront-hosting-toolkit/tree/main/resources) for Angular, React, Vue, Nextjs specific buildspecs and CloudFront Functions.
 
 ## Configuration
 
@@ -75,10 +96,11 @@ The `StaticSiteStack` construct can be configured via the following props:
   <tbody align=left valign=top>
     <tr>
       <th>
-        <code>env.account</code> and <code>env.region</code>
+        <code>env</code>
       </th>
       <th>
-        <code>string</code>
+        <!-- <code>account: string</code>
+        <code>region: string</code> -->
       </th>
       <td>
         <strong>Required</strong>. Your account ID and your preferred region.
@@ -103,7 +125,7 @@ The `StaticSiteStack` construct can be configured via the following props:
         <code>string</code>
       </th>
       <td>
-        <strong>Required</strong>. A string identifier for the project's service the app is created for. This can be seen as the name of the app.
+        <strong>Required</strong>. A string identifier the site. This can be seen as the name of the site.
       </td>
     </tr>
     <tr id="constructor-option-environment">
@@ -116,8 +138,47 @@ The `StaticSiteStack` construct can be configured via the following props:
       <td><strong>Required</strong>. A string to identify the environment of the app. This enables us to deploy multiple different environments of the same app, e.g., production and development.
       </td>
     </tr>
-    <tr><td></td></tr>
+    <tr><td colspan=3></td></tr>
+    <tr id="constructor-option-functions">
+      <th>
+        <code>edgeFunctionFilePath</code>
+      </th>
+      <th>
+        <code>string</code>
+      </th>
+      <td><strong>Optional</strong>. If you have a custom CloudFront Functions file for your app, provide relative path to the file. E.g. <code>./index.js</code>
+      </td>
+    </tr>
     <tr>
+    <!-- <tr><td colspan=3></td></tr> -->
+    <tr id="constructor-option-buildstep">
+      <th>
+        <code>buildSpecFilePath</code>
+      </th>
+      <th>
+        <code>string</code>
+      </th>
+      <td><strong>Optional</strong>. If you have a custom `buildspec.yml` file for your app, provide relative path to the file. E.g. <code>./buildspec.yml</code>
+      </td>
+    </tr>
+    <tr>
+      <th>
+        <code>buildProps</code>
+      </th>
+      <th>
+      </th>
+      <td>
+        <strong>Optional</strong>. If you provide a <code>buildSpec</code> file, skip this. 
+        <ul>
+          <li><code>runtime: string;</code></li>
+          <li><code>installcmd: string;</code></li>
+          <li><code>buildcmd: string;</code></li>
+          <li><code>outputDir: string;</code></li>
+        <ul>
+      </td>
+    </tr>
+    <tr><td colspan=3></td></tr>
+    <!-- <tr id="constructor-option-domain">
       <th>
         <code>enableDomain</code>
       </th>
@@ -126,8 +187,8 @@ The `StaticSiteStack` construct can be configured via the following props:
       </th>
       <td><strong>Optional</strong>. Whether to manage domains using Route53 and ACM. Defaults to <code>false</code>
       </td>
-    </tr>
-    <tr id="constructor-option-domain">
+    </tr> -->
+    <tr>
       <th>
         - <code>domain</code>
       </th>
@@ -160,8 +221,8 @@ The `StaticSiteStack` construct can be configured via the following props:
         <strong>Optional</strong>. The id of the hosted zone to create a DNS record for the specified domain.
       </td>
     </tr>
-    <tr><td></td></tr>
-    <tr>
+    <tr><td colspan=3></td></tr>
+    <tr id="constructor-option-accesslog">
       <th>
         <code>enableAccessLogAnalysis</code>
       </th>
@@ -181,8 +242,8 @@ The `StaticSiteStack` construct can be configured via the following props:
       <td><strong>Optional</strong>. Whether to provision Lambda and EventBridge rule to cleanup stale static assets. Defaults to <code>false</code>
       </td>
     </tr>
-    <tr><td></td></tr>
-    <tr>
+    <tr><td colspan=3></td></tr>
+    <tr id="constructor-option-deployment">
       <th>
         <code>enableDeployment</code>
       </th>
@@ -199,7 +260,22 @@ The `StaticSiteStack` construct can be configured via the following props:
       <th>
         <code>string</code>
       </th>
-      <td><strong>Optional</strong>.
+      <td><strong>Optional</strong>. When <code>enableDeployment</code> is set to <code>true</code>. Provide the ARN to your AWS Parameter Store SecureString param.
+      </td>
+    </tr>
+    <tr>
+      <th>
+        - <code>sourceProps</code>
+      </th>
+      <th>
+      </th>
+      <td><strong>Optional</strong>. For use only when <code>enableDeployment</code> is set to <code>true</code>.
+        <ul>
+          <!-- <li><code>provider: string;</code> E.g. github</li> -->
+          <li><code>owner: string;</code></li>
+          <li><code>repo: string;</code></li>
+          <li><code>branchOrRef: string;</code></li>
+        <ul>
       </td>
     </tr>
   </tbody>
@@ -226,21 +302,17 @@ By running the following script, the Nuxt app will be built automatically via `y
 and the CDK stack will be deployed to AWS.
 
 ```bash
-npx cdk-staticsite-deploy
+npx staticsite-deploy
 ```
 The executable file:
 
 ```bash
-node_modules/.bin/cdk-staticsite-deploy
+node_modules/.bin/staticsite-deploy
 ```
 
 Alternatively, you can run the following commands separately to customize the deployment process:
 
 ```bash
-# tsx
-npx cdk deploy --require-approval never --app "npx tsx stack/index.ts"
-
-# ts-node 
 npx cdk deploy --require-approval never --all --app="npx ts-node stack/index.ts" 
 ```
 
@@ -250,11 +322,11 @@ If you want to destroy the stack and all its resources (including storage, e.g.,
 
 
 ```bash
-npx cdk-staticsite-destroy
+npx staticsite-destroy
 ```
 The executable file:
 ```bash
-node_modules/.bin/cdk-staticsite-destroy
+node_modules/.bin/staticsite-destroy
 ```
 
 ## Reference: Created AWS Resources
@@ -286,6 +358,81 @@ The following AWS resources will be created by this stack:
 - AppConfig Application and Environment.
 
 - CodeBuild Project, CodePipeline pipeline
+
+## Manually setting up CDK
+
+You can use `StaticSiteStack` as a CDK construct within your CDK code to seamlessly integrate hosting. Here's an example of how to use it:
+
+Create a `stacks` directory in your project root and an empty file `index.ts` and fill in the props accordingly. 
+
+> [!HINT]
+> Use different filenames such as `production.ts` and `testing.ts` for environments.
+
+```ts
+#!/usr/bin/env node
+import { App } from "aws-cdk-lib";
+import { StaticSiteStack, type StaticSiteProps } from "@thunderso/stacks/static-site";
+
+const appStackProps: StaticSiteProps = {
+  env: {
+    account: 'your-account-id',
+    region: 'us-east-1'
+  },
+  application: 'your-application-id',
+  service: 'your-service-id',
+  environment: 'production',
+
+  // Your Github repository url contains https://github.com/<owner>/<repo>
+  sourceProps: {
+    owner: 'your-github-username',
+    repo: 'your-repo-name',
+    branchOrRef: 'main'
+  }
+
+  // Auto deployment
+  // - create a Github personal access token
+  // - store in Parameter Store
+  githubAccessTokenArn: 'arn:aws:ssm:us-east-1:123456789012:parameter/github-token',
+
+
+  // Either provide a buildspec.yml file OR leave empty and fill out buildProps
+  buildSpecFilePath: './buildspec.yml',
+  buildProps: {
+    runtime: 20; // nodejs version
+    installcmd: string;
+    buildcmd: string;
+    outputDir: string;
+  }
+
+
+  // Optional: Domain settings
+  // - create a hosted zone for your domain
+  // - issue a global tls certificate in us-east-1 
+  domain: 'example.com',
+  hostedZoneId: 'Z1D633PJN98FT9',
+  globalCertificateArn: 'arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-abcd-1234-abcd-1234abcd1234',
+
+  // Optional: functions
+  enableAccessLogAnalysis: true,
+  enableAssetCleanup: true,
+  edgeFunctionFilePath: './edge.js',
+
+  // all resources created in the stack will be tagged
+  // tags: {
+  //   key: 'value'
+  // },
+};
+
+new StaticSiteStack(new App(), `${appStackProps.application}-${appStackProps.environment}-${appStackProps.service}-stack`, appStackProps);
+
+```
+
+Run the following command to deploy stacks separately.
+
+```bash
+npx cdk deploy --require-approval never --all --app="npx ts-node stack/index.ts" 
+```
+
 
 
 
