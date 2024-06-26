@@ -3,7 +3,7 @@ name: Publish
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   build:
@@ -21,13 +21,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd example-stack/ && npm ci
-          cd static-site/ && npm ci
+          npm ci
           
       - name: Build project
         run: |
-          cd example-stack/ && npm run build
-          cd static-site/ && npm run build
+          npm run build
 
       - name: Publish
         run: npm publish --access public
