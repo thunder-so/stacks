@@ -4,9 +4,9 @@ Easily deploy static site generators and client-only SPA (single page applicatio
 
 - Fast responses from [Cloudfront](https://aws.amazon.com/cloudfront/)
 - Automatic upload of the build files for CSR and static assets to [S3](https://aws.amazon.com/s3/) with optimized caching rules
-- Automatic cleanup of outdated static assets and build files
-- Publicly available by a custom domain (or subdomain) via [Route53](https://aws.amazon.com/route53/)
 - Automatic build and deploy with [CodeBuild](https://aws.amazon.com/codebuild/) and [CodePipeline](https://aws.amazon.com/codepipeline/) from [Github](https://github.com/) repository.
+- Publicly available by a custom domain (or subdomain) via [Route53](https://aws.amazon.com/route53/)
+- Automatic cleanup of outdated static assets and build files
 - Access logs analysis via [Athena](https://aws.amazon.com/athena/) for the site's CloudFront distribution
 
 ## Prerequisites
@@ -71,7 +71,6 @@ This is required to provide the app via HTTPS on the public internet. Take note 
 
 2. [CloudFront Functions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-functions.html) are used for URL rewriting.
 
->[!HINT]
 > Check out the resources from [cloudfront-hosting-toolkit](https://github.com/awslabs/cloudfront-hosting-toolkit/tree/main/resources) for Angular, React, Vue, Nextjs specific buildspecs and CloudFront Functions.
 
 ## Configuration
@@ -355,7 +354,6 @@ You can use `StaticSiteStack` as a CDK construct within your CDK code to seamles
 
 Create a `stacks` directory in your project root and an empty file `index.ts` and fill in the props accordingly. 
 
-> [!HINT]
 > Use different filenames such as `production.ts` and `testing.ts` for environments.
 
 ```ts
@@ -413,7 +411,7 @@ const appStackProps: StaticSiteProps = {
   // },
 };
 
-new StaticSiteStack(new App(), `${appStackProps.application}-${appStackProps.environment}-${appStackProps.service}-stack`, appStackProps);
+new StaticSiteStack(new App(), `${appStackProps.application}-${appStackProps.service}-${appStackProps.environment}-stack`, appStackProps);
 ```
 
 Run the following command to deploy stacks separately.
