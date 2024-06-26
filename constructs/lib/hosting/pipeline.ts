@@ -60,7 +60,7 @@ export class PipelineConstruct extends Construct {
   public buildOutputBucket: IBucket;
 
   /**
-   * The Lambda function for sync-buckets.js
+   * The Lambda function for sync.js
    */
   public syncBucketsFunction: Function;
 
@@ -283,6 +283,7 @@ export class PipelineConstruct extends Construct {
         new LambdaInvokeAction({
           actionName: 'SyncBucketsAction',
           lambda: this.syncBucketsFunction,
+          runOrder: 4,
         }),
       ],
     });

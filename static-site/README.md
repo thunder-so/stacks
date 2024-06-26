@@ -44,6 +44,14 @@ The executable file can be found at
 node_modules/.bin/static-site-init
 ```
 
+### Enable Automatic Deployments
+
+1. [Create a Github Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for your Github account. This token must be kept secure.
+
+2. [Create a Parameter Store parameter (SecureString)](https://docs.aws.amazon.com/kms/latest/developerguide/services-parameter-store.html) with the Personal Access Token you created earlier. Note the `ARN` of the parameter. E.g. `arn:aws:ssm:<REGION_NAME>:<ACCOUNT_ID>:parameter/<parameter-name>`.
+
+3. Input the noted `ARN` to the `githubAccessTokenArn` field in your stack.
+
 ### Manage Domain with Route53 (Optional)
 
 1. [Create a hosted zone in Route53](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html) for the desired domain, if you don't have one yet.
@@ -55,15 +63,6 @@ This is required to provide the app via HTTPS on the public internet. Take note 
 
 > [!IMPORTANT]
 > The certificate must be issued in `us-east-1` *(global)* regardless of the region used for the app itself as it will be attached to the Cloudfront distribution which works globally.
-
-
-### Enable Automatic Deployments
-
-1. [Create a Github Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for your Github account. This token must be kept secure.
-
-2. [Create a Parameter Store parameter (SecureString)](https://docs.aws.amazon.com/kms/latest/developerguide/services-parameter-store.html) with the Personal Access Token you created earlier. Note the `ARN` of the parameter. E.g. `arn:aws:ssm:<REGION_NAME>:<ACCOUNT_ID>:parameter/<parameter-name>`.
-
-3. Input the noted `ARN` to the `githubAccessTokenArn` field in your stack.
 
 
 ### Custom `buildspec.yml` and CloudFront Functions (Optional)
@@ -138,18 +137,32 @@ The `StaticSiteStack` construct can be configured via the following props:
       <td><strong>Required</strong>. A string to identify the environment of the app. This enables us to deploy multiple different environments of the same app, e.g., production and development.
       </td>
     </tr>
-    <tr><td colspan=3></td></tr>
-    <tr id="constructor-option-functions">
+    <tr><td colspan=3><small>Source, build and deploy:</small></td></tr>
+    <tr id="constructor-option-deployment">
       <th>
-        <code>edgeFunctionFilePath</code>
+        <code>sourceProps</code>
+      </th>
+      <th>
+      </th>
+      <td><strong>Optional</strong>. Provide the Github repository details. https://github.com/<code>owner</code>/<code>repo</code>/
+        <ul>
+          <!-- <li><code>provider: string;</code> E.g. github</li> -->
+          <li><code>owner: string;</code></li>
+          <li><code>repo: string;</code></li>
+          <li><code>branchOrRef: string;</code></li>
+        <ul>
+      </td>
+    </tr>
+    <tr>
+      <th>
+        <code>githubAccessTokenArn</code>
       </th>
       <th>
         <code>string</code>
       </th>
-      <td><strong>Optional</strong>. If you have a custom CloudFront Functions file for your app, provide relative path to the file. E.g. <code>./index.js</code>
+      <td><strong>Optional</strong>. When <code>enableDeployment</code> is set to <code>true</code>. Provide the ARN to your AWS Parameter Store SecureString param.
       </td>
     </tr>
-    <tr>
     <!-- <tr><td colspan=3></td></tr> -->
     <tr id="constructor-option-buildstep">
       <th>
@@ -177,7 +190,7 @@ The `StaticSiteStack` construct can be configured via the following props:
         <ul>
       </td>
     </tr>
-    <tr><td colspan=3></td></tr>
+    <tr><td colspan=3><small>Domain settings:</small></td></tr>
     <!-- <tr id="constructor-option-domain">
       <th>
         <code>enableDomain</code>
@@ -190,7 +203,7 @@ The `StaticSiteStack` construct can be configured via the following props:
     </tr> -->
     <tr>
       <th>
-        - <code>domain</code>
+        <code>domain</code>
       </th>
       <th>
         <code>string</code>
@@ -201,30 +214,42 @@ The `StaticSiteStack` construct can be configured via the following props:
     </tr>
     <tr>
       <th>
-        - <code>globalCertificateArn</code>
+        <code>hostedZoneId</code>
       </th>
       <th>
         <code>string</code>
       </th>
       <td>
-        <strong>Optional</strong>. The ARN of the certificate to use on CloudFront for the app to make it accessible via HTTPS. The certificate must be issued for the specified domain in us-east-1 (global) regardless of the region specified via 'env.region' as CloudFront only works globally.
+        <strong>Optional</strong>. Required when domain is provided. The id of the hosted zone to create a DNS record for the specified domain. 
       </td>
     </tr>
     <tr>
       <th>
-        - <code>hostedZoneId</code>
+        <code>globalCertificateArn</code>
       </th>
       <th>
         <code>string</code>
       </th>
       <td>
-        <strong>Optional</strong>. The id of the hosted zone to create a DNS record for the specified domain.
+        <strong>Optional</strong>. Required when domain is provided. The ARN of the certificate to use on CloudFront for the app to make it accessible via HTTPS. The certificate must be issued for the specified domain in us-east-1 (global) regardless of the region specified via 'env.region' as CloudFront only works globally.
       </td>
     </tr>
-    <tr><td colspan=3></td></tr>
+    <tr><td colspan=3><small>Edge functions:</small></td></tr>
+    <tr id="constructor-option-functions">
+      <th>
+        <code>edgeFunctionFilePath</code>
+      </th>
+      <th>
+        <code>string</code>
+      </th>
+      <td><strong>Optional</strong>. If you have a custom CloudFront Functions file for your app, provide relative path to the file. E.g. <code>./index.js</code>
+      </td>
+    </tr>
+    <tr>
+    <tr><td colspan=3><small>Optional settings:</small></td></tr>
     <tr id="constructor-option-accesslog">
       <th>
-        <code>enableAccessLogAnalysis</code>
+        <code>enableAnalytics</code>
       </th>
       <th>
         <code>boolean</code>
@@ -240,42 +265,6 @@ The `StaticSiteStack` construct can be configured via the following props:
         <code>boolean</code>
       </th>
       <td><strong>Optional</strong>. Whether to provision Lambda and EventBridge rule to cleanup stale static assets. Defaults to <code>false</code>
-      </td>
-    </tr>
-    <tr><td colspan=3></td></tr>
-    <tr id="constructor-option-deployment">
-      <th>
-        <code>enableDeployment</code>
-      </th>
-      <th>
-        <code>boolean</code>
-      </th>
-      <td><strong>Optional</strong>. Whether to provision CodeBuild to automatically build your code from Github repository. Defaults to <code>false</code>
-      </td>
-    </tr>
-    <tr>
-      <th>
-        - <code>githubAccessTokenArn</code>
-      </th>
-      <th>
-        <code>string</code>
-      </th>
-      <td><strong>Optional</strong>. When <code>enableDeployment</code> is set to <code>true</code>. Provide the ARN to your AWS Parameter Store SecureString param.
-      </td>
-    </tr>
-    <tr>
-      <th>
-        - <code>sourceProps</code>
-      </th>
-      <th>
-      </th>
-      <td><strong>Optional</strong>. For use only when <code>enableDeployment</code> is set to <code>true</code>.
-        <ul>
-          <!-- <li><code>provider: string;</code> E.g. github</li> -->
-          <li><code>owner: string;</code></li>
-          <li><code>repo: string;</code></li>
-          <li><code>branchOrRef: string;</code></li>
-        <ul>
       </td>
     </tr>
   </tbody>
@@ -343,8 +332,11 @@ The following AWS resources will be created by this stack:
   - A bucket to store the client files and static assets of the build with optimized cache settings.
   - A bucket to store the CloudFront access logs for analysis via Athena. Only created if `enableAccessLogsAnalysis` is set to `true`.
 
-- [Route53](https://aws.amazon.com/route53/): Two DNS records (`A` for IPv4 and `AAAA` for IPv6) in the configured hosted zone to make the app available on the internet via the configured custom domain.
+- [CodeBuild](https://aws.amazon.com/codebuild/): A build project to automatically build and package the static assets from the source code.
 
+- [CodePipeline](https://aws.amazon.com/codepipeline/): A deployment pipeline to automate the release process, integrating with CodeBuild, S3, and other AWS services.
+
+- [Route53](https://aws.amazon.com/route53/): Two DNS records (`A` for IPv4 and `AAAA` for IPv6) in the configured hosted zone to make the app available on the internet via the configured custom domain.
 
 - [Lambda](https://aws.amazon.com/lambda/):
     - A Lambda function that deletes the outdated static assets of the app from S3.
@@ -354,9 +346,8 @@ The following AWS resources will be created by this stack:
 
 - [Athena](https://aws.amazon.com/athena/): A database and table to analyze the access logs of the app's CloudFront distribution. Only created if `enableAccessLogsAnalysis` is set to `true`.
 
-- AppConfig Application and Environment.
+- [AppConfig](https://aws.amazon.com/appconfig/): An application and environment configuration for deployment settings management.
 
-- CodeBuild Project, CodePipeline pipeline
 
 ## Manually setting up CDK
 
@@ -386,7 +377,7 @@ const appStackProps: StaticSiteProps = {
     owner: 'your-github-username',
     repo: 'your-repo-name',
     branchOrRef: 'main'
-  }
+  },
 
   // Auto deployment
   // - create a Github personal access token
@@ -397,22 +388,24 @@ const appStackProps: StaticSiteProps = {
   buildSpecFilePath: './buildspec.yml',
   buildProps: {
     runtime: 20, // nodejs version
-    installcmd: string,
-    buildcmd: string,
-    outputDir: string
+    installcmd: "npm ci",
+    buildcmd: "npm run build",
+    outputDir: "dist"
   },
 
   // Optional: Domain settings
   // - create a hosted zone for your domain
   // - issue a global tls certificate in us-east-1 
   domain: 'example.com',
-  hostedZoneId: 'Z1D633PJN98FT9',
+  hostedZoneId: 'Z1D633PJRANDOM',
   globalCertificateArn: 'arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-abcd-1234-abcd-1234abcd1234',
 
-  // Optional: functions
-  enableAccessLogAnalysis: true,
-  enableAssetCleanup: true,
+  // Custom Cloudfront Functions for URL rewrite
   edgeFunctionFilePath: './edge.js',
+
+  // Optional: functions
+  enableAnalytics: true,
+  enableAssetCleanup: true,
 
   // all resources created in the stack will be tagged
   // tags: {
@@ -421,7 +414,6 @@ const appStackProps: StaticSiteProps = {
 };
 
 new StaticSiteStack(new App(), `${appStackProps.application}-${appStackProps.environment}-${appStackProps.service}-stack`, appStackProps);
-
 ```
 
 Run the following command to deploy stacks separately.
@@ -429,9 +421,6 @@ Run the following command to deploy stacks separately.
 ```bash
 npx cdk deploy --require-approval never --all --app="npx ts-node stack/index.ts" 
 ```
-
-
-
 
 ## Useful commands
 * `npx cdk deploy`  deploy this stack to your default AWS account/region

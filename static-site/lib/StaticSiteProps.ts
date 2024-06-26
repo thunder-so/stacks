@@ -28,17 +28,26 @@ export interface StaticSiteProps extends StackProps {
     readonly environment: string;
   
     /**
-     * Optional. If you have a custom CloudFront Functions file for your app, provide the relative path to the file.
+     * Configure your Github repository
      */
-    readonly cfFunctionFilePath?: string;
+    readonly sourceProps: {
+      owner: string;
+      repo: string;
+      branchOrRef: string;
+    };
+
+    /**
+     * Provide the ARN to your AWS Parameter Store SecureString param.
+     */
+    readonly githubAccessTokenArn?: string;
   
     /**
-     * Optional. If you have a custom buildspec.yml file for your app, provide the relative path to the file.
+     * If you have a custom buildspec.yml file for your app, provide the relative path to the file.
      */
     readonly buildSpecFilePath?: string;
   
     /**
-     * Optional. If you provide a buildSpec file, skip this.
+     * If you provide a buildSpec file, skip this.
      */
     readonly buildProps?: {
       runtime: number;
@@ -46,12 +55,7 @@ export interface StaticSiteProps extends StackProps {
       buildcmd: string;
       outputDir: string;
     };
-  
-    /**
-     * Optional. Whether to manage domains using Route53 and ACM.
-     */
-    readonly enableDomain?: boolean;
-  
+   
     /**
      * Optional. The domain (without the protocol) at which the app shall be publicly available.
      */
@@ -68,6 +72,11 @@ export interface StaticSiteProps extends StackProps {
     readonly hostedZoneId?: string;
   
     /**
+     * Optional. If you have a custom CloudFront Functions file for your app, provide the relative path to the file.
+     */
+    readonly cfFunctionFilePath?: string;
+    
+    /**
      * Optional. Whether to provision Athena for CloudFront access logs analysis.
      */
     readonly enableAccessLogAnalysis?: boolean;
@@ -76,24 +85,7 @@ export interface StaticSiteProps extends StackProps {
      * Optional. Whether to provision Lambda and EventBridge rule to cleanup stale static assets.
      */
     readonly enableAssetCleanup?: boolean;
-  
-    /**
-     * Optional. Whether to provision CodeBuild to automatically build your code from GitHub repository.
-     */
-    readonly enableDeployment?: boolean;
-  
-    /**
-     * Optional. When enableDeployment is set to true. Provide the ARN to your AWS Parameter Store SecureString param.
-     */
-    readonly githubAccessTokenArn?: string;
-  
-    /**
-     * Optional. For use only when enableDeployment is set to true.
-     */
-    readonly sourceProps: {
-      owner: string;
-      repo: string;
-      branchOrRef: string;
-    };
+
+
 }
   
