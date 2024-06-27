@@ -1,6 +1,6 @@
 # AWS CDK Deployment Stack for SSG & SPA
 
-Easily deploy static site generators and client-only SPA (single page applications) via CDK on AWS.
+Easily deploy SSG (static site generators) and client-only SPA (single page applications) via CDK on AWS.
 
 - Fast responses from [CloudFront](https://aws.amazon.com/cloudfront/)
 - Automatic upload of the build files for CSR and static assets to [S3](https://aws.amazon.com/s3/) with optimized caching rules
@@ -143,7 +143,7 @@ The `StaticSiteStack` construct can be configured via the following props:
       </th>
       <th>
       </th>
-      <td>Provide the Github repository details. https://github.com/<code>owner</code>/<code>repo</code>/
+      <td><strong>Required</strong>. Provide the Github repository details.
         <ul>
           <!-- <li><code>provider: string;</code> E.g. github</li> -->
           <li><code>owner: string;</code></li>
@@ -159,7 +159,7 @@ The `StaticSiteStack` construct can be configured via the following props:
       <th>
         <code>string</code>
       </th>
-      <td>Create a Github Personal Access Token, save the token as a parameter in AWS Parameter Store. Provide the ARN to your parameter. Ensure it is <code>SecureString</code>
+      <td><strong>Required</strong>. Create a Github Personal Access Token, save the token as a parameter in AWS Parameter Store. Provide the ARN. Ensure it is <code>SecureString</code>.
       </td>
     </tr>
     <!-- <tr><td colspan=3></td></tr> -->
@@ -235,7 +235,7 @@ The `StaticSiteStack` construct can be configured via the following props:
       </td>
     </tr>
     <tr>
-    <tr><td colspan=3><small>Optional settings:</small></td></tr>
+    <tr><td colspan=3><small>Addon functions:</small></td></tr>
     <tr id="constructor-option-accesslog">
       <th>
         <code>enableAnalytics</code>
