@@ -2,7 +2,7 @@
 
 Easily deploy static site generators and client-only SPA (single page applications) via CDK on AWS.
 
-- Fast responses from [Cloudfront](https://aws.amazon.com/cloudfront/)
+- Fast responses from [CloudFront](https://aws.amazon.com/cloudfront/)
 - Automatic upload of the build files for CSR and static assets to [S3](https://aws.amazon.com/s3/) with optimized caching rules
 - Automatic build and deploy with [CodeBuild](https://aws.amazon.com/codebuild/) and [CodePipeline](https://aws.amazon.com/codepipeline/) from [Github](https://github.com/) repository.
 - Publicly available by a custom domain (or subdomain) via [Route53](https://aws.amazon.com/route53/)
@@ -20,7 +20,7 @@ This package uses the `npm` package manager and is an ES Module.
 Install the package and its required dependencies:
 
 ```bash
-npm install -g thunder-so/stacks --save-dev
+npm install thunder-so/stacks --save-dev
 ```
 
 If you do not have already, your `package.json` must also contain `aws-cdk-lib` and `ts-node`:
@@ -62,16 +62,16 @@ On the hosted zone details you should see the `Hosted zone ID` of the hosted zon
 This is required to provide the app via HTTPS on the public internet. Take note of the displayed `ARN` for the certificate. 
 
 > [!IMPORTANT]
-> The certificate must be issued in `us-east-1` *(global)* regardless of the region used for the app itself as it will be attached to the Cloudfront distribution which works globally.
+> The certificate must be issued in `us-east-1` *(global)* regardless of the region used for the app itself as it will be attached to the CloudFront distribution which works globally.
 
 
 ### Custom `buildspec.yml` and CloudFront Functions (Optional)
 
 1. [Build specification reference for CodeBuild](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html) 
 
-2. [CloudFront Functions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-functions.html) are used for URL rewriting.
+2. [CloudFront Functions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/CloudFront-functions.html) are used for URL rewriting.
 
-> Check out the resources from [cloudfront-hosting-toolkit](https://github.com/awslabs/cloudfront-hosting-toolkit/tree/main/resources) for Angular, React, Vue, Nextjs specific buildspecs and CloudFront Functions.
+> Check out the resources from [CloudFront-hosting-toolkit](https://github.com/awslabs/CloudFront-hosting-toolkit/tree/main/resources) for Angular, React, Vue, Nextjs specific buildspecs and CloudFront Functions.
 
 ## Configuration
 
@@ -143,7 +143,7 @@ The `StaticSiteStack` construct can be configured via the following props:
       </th>
       <th>
       </th>
-      <td><strong>Optional</strong>. Provide the Github repository details. https://github.com/<code>owner</code>/<code>repo</code>/
+      <td>Provide the Github repository details. https://github.com/<code>owner</code>/<code>repo</code>/
         <ul>
           <!-- <li><code>provider: string;</code> E.g. github</li> -->
           <li><code>owner: string;</code></li>
@@ -159,7 +159,7 @@ The `StaticSiteStack` construct can be configured via the following props:
       <th>
         <code>string</code>
       </th>
-      <td><strong>Optional</strong>. When <code>enableDeployment</code> is set to <code>true</code>. Provide the ARN to your AWS Parameter Store SecureString param.
+      <td>Create a Github Personal Access Token, save the token as a parameter in AWS Parameter Store. Provide the ARN to your parameter. Ensure it is <code>SecureString</code>
       </td>
     </tr>
     <!-- <tr><td colspan=3></td></tr> -->
@@ -170,7 +170,7 @@ The `StaticSiteStack` construct can be configured via the following props:
       <th>
         <code>string</code>
       </th>
-      <td><strong>Optional</strong>. If you have a custom `buildspec.yml` file for your app, provide relative path to the file. E.g. <code>./buildspec.yml</code>
+      <td><strong>Optional</strong>. If you have a custom CodeBuild Buildspec file for your app, provide relative path to the file. E.g. <code>./buildspec.yml</code>
       </td>
     </tr>
     <tr>
@@ -180,7 +180,7 @@ The `StaticSiteStack` construct can be configured via the following props:
       <th>
       </th>
       <td>
-        <strong>Optional</strong>. If you provide a <code>buildSpec</code> file, skip this. 
+        <strong>Required</strong> if <code>buildSpecFilePath</code> is blank. 
         <ul>
           <li><code>runtime: string;</code></li>
           <li><code>installcmd: string;</code></li>
@@ -190,17 +190,7 @@ The `StaticSiteStack` construct can be configured via the following props:
       </td>
     </tr>
     <tr><td colspan=3><small>Domain settings:</small></td></tr>
-    <!-- <tr id="constructor-option-domain">
-      <th>
-        <code>enableDomain</code>
-      </th>
-      <th>
-        <code>boolean</code>
-      </th>
-      <td><strong>Optional</strong>. Whether to manage domains using Route53 and ACM. Defaults to <code>false</code>
-      </td>
-    </tr> -->
-    <tr>
+    <tr id="constructor-option-domain">
       <th>
         <code>domain</code>
       </th>
@@ -253,7 +243,7 @@ The `StaticSiteStack` construct can be configured via the following props:
       <th>
         <code>boolean</code>
       </th>
-      <td><strong>Optional</strong>. Whether to provision Athena for Cloudfront access logs analysis. Defaults to <code>false</code>
+      <td><strong>Optional</strong>. Whether to provision Athena for CloudFront access logs analysis. Defaults to <code>false</code>
       </td>
     </tr>
     <tr>
@@ -325,11 +315,11 @@ In the following, you can find an overview of the AWS resources that will be cre
 This stack is responsible for deploying static sites and dynamic SPA apps to AWS.
 The following AWS resources will be created by this stack:
 
-- [CloudFront](https://aws.amazon.com/cloudfront/): A distribution to route incoming requests to the S3 bucket to serve the static assets for the app.
+- [CloudFront](https://aws.amazon.com/CloudFront/): A distribution to route incoming requests to the S3 bucket to serve the static assets for the app.
 
 - [S3](https://aws.amazon.com/s3/):
   - A bucket to store the client files and static assets of the build with optimized cache settings.
-  - A bucket to store the CloudFront access logs for analysis via Athena. Only created if `enableAccessLogsAnalysis` is set to `true`.
+  - A bucket to store the CloudFront access logs for analysis via Athena. Only created if `enableAnalytics` is set to `true`.
 
 - [CodeBuild](https://aws.amazon.com/codebuild/): A build project to automatically build and package the static assets from the source code.
 
@@ -343,7 +333,7 @@ The following AWS resources will be created by this stack:
 - [EventBridge](https://aws.amazon.com/eventbridge/):
     - A scheduled rule to trigger the cleanup Lambda function for deleting the outdated static assets of the app from S3 every tuesday at 03:30 AM GMT.
 
-- [Athena](https://aws.amazon.com/athena/): A database and table to analyze the access logs of the app's CloudFront distribution. Only created if `enableAccessLogsAnalysis` is set to `true`.
+- [Athena](https://aws.amazon.com/athena/): A database and table to analyze the access logs of the app's CloudFront distribution. Only created if `enableAnalytics` is set to `true`.
 
 - [AppConfig](https://aws.amazon.com/appconfig/): An application and environment configuration for deployment settings management.
 
@@ -394,11 +384,11 @@ const appStackProps: StaticSiteProps = {
   // Optional: Domain settings
   // - create a hosted zone for your domain
   // - issue a global tls certificate in us-east-1 
-  domain: 'example.com',
+  domain: 'sub.example.com',
   hostedZoneId: 'Z1D633PJRANDOM',
   globalCertificateArn: 'arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-abcd-1234-abcd-1234abcd1234',
 
-  // Custom Cloudfront Functions for URL rewrite
+  // Custom CloudFront Functions for URL rewrite
   edgeFunctionFilePath: './edge.js',
 
   // Optional: functions

@@ -41,7 +41,7 @@ export class ExampleStack extends Stack {
       value: environment.Environment.ref
     })
     new CfnOutput(this, 'BucketName', {
-      value: bucket.BucketName.ref
+      value: bucket.bucketName
     })
 
   }
