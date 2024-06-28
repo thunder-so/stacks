@@ -23,10 +23,10 @@ Install the package and its required dependencies:
 npm install thunder-so/stacks --save-dev
 ```
 
-If you do not have already, your `package.json` must also contain `aws-cdk-lib` and `ts-node`:
+<!-- If you do not have already, your `package.json` must also contain `aws-cdk-lib` and `tsx`:
 ```bash
-npm install aws-cdk-lib ts-node --save-dev
-```
+npm install aws-cdk-lib tsx --save-dev
+``` -->
 
 ## Setup
 
@@ -290,7 +290,7 @@ node_modules/.bin/static-site-deploy
 Alternatively, you can run the following commands separately to customize the deployment process:
 
 ```bash
-npx cdk deploy --require-approval never --all --app="npx ts-node stack/index.ts" 
+npx cdk deploy --require-approval never --all --app="npx tsx stack/index.ts" 
 ```
 
 ## Destroy the Stack
@@ -407,7 +407,7 @@ new StaticSiteStack(new App(), `${appStackProps.application}-${appStackProps.ser
 Run the following command to deploy stacks separately.
 
 ```bash
-npx cdk deploy --require-approval never --all --app="npx ts-node stack/index.ts" 
+npx cdk deploy --require-approval never --all --app="npx tsx stack/index.ts" 
 ```
 
 ## Useful commands
