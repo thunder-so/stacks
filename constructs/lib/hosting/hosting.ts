@@ -227,7 +227,7 @@ export class HostingConstruct extends Construct {
     }
 
     /**
-     * Resolves the hosted zone at which the DNS records shall be created to access the Nuxt app on the internet.
+     * Resolves the hosted zone at which the DNS records shall be created to access the app on the internet.
      *
      * @param props
      * @private
@@ -242,7 +242,7 @@ export class HostingConstruct extends Construct {
     }
 
     /**
-     * Creates the DNS records to access the Nuxt app on the internet via the custom domain.
+     * Creates the DNS records to access the app on the internet via the custom domain.
      *
      * @param props
      * @private

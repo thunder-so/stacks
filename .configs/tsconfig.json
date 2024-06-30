@@ -2,14 +2,11 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ES2020",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "Node",
     "lib": [
-      "ES2020",
-      "dom",
-      "dom.iterable"
+      "ES2020"
     ],
     "jsx": "preserve",
-    "types": ["node"],
     "declaration": true,
     "strict": true,
     "noImplicitAny": true,
@@ -20,13 +17,16 @@
     "noUnusedParameters": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": false,
-    "inlineSourceMap": true,
-    "inlineSources": true,
+    "inlineSourceMap": false,
+    "inlineSources": false,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
+    "allowSyntheticDefaultImports": true,
     "typeRoots": [
-      "./node_modules/@types"
-    ]
+      "./node_modules/@types",
+      ".././node_modules/@types",
+    ],
+    "types": ["node"]
   },
   "exclude": [
     "node_modules",
