@@ -11,11 +11,11 @@ export interface HostingProps {
     application: string;
     service: string;
     environment: string;
-    cfFunctionFilePath?: string;
+    edgeFunctionFilePath?: string;
     domain?: string;
     globalCertificateArn?: string;
     hostedZoneId?: string;
-    enableAccessLogAnalysis?: boolean;
+    enableAnalytics?: boolean;
 }
 
 export class HostingConstruct extends Construct {
@@ -31,7 +31,7 @@ export class HostingConstruct extends Construct {
     public accessLogsBucket: IBucket|undefined;
 
     /**
-     * The S3 bucket where the access logs of the CloudFront distribution gets stored.
+     * The CloudFront distribution.
      */
     public distribution:  IDistribution;
 
@@ -43,7 +43,7 @@ export class HostingConstruct extends Construct {
     /**
      * The cloudfront key-value store where we keep the commit hash
      */
-    private kv: KeyValueStore;
+    // private kv: KeyValueStore;
 
 
     constructor(scope: Construct, id: string, props: HostingProps) {
@@ -57,7 +57,7 @@ export class HostingConstruct extends Construct {
             this.createDnsRecords(props);
         }
 
-        if (props.enableAccessLogAnalysis) {
+        if (props.enableAnalytics) {
 
         }
 

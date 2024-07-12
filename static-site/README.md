@@ -23,10 +23,10 @@ Install the package and its required dependencies:
 npm install thunder-so/stacks --save-dev
 ```
 
-<!-- If you do not have already, your `package.json` must also contain `aws-cdk-lib` and `tsx`:
+If you do not have already, your `package.json` must also contain `aws-cdk-lib` and `tsx`:
 ```bash
 npm install aws-cdk-lib tsx --save-dev
-``` -->
+```
 
 ## Setup
 
@@ -170,7 +170,7 @@ The `StaticSiteStack` construct can be configured via the following props:
       <th>
         <code>string</code>
       </th>
-      <td><strong>Optional</strong>. If you have a custom CodeBuild Buildspec file for your app, provide relative path to the file. E.g. <code>./buildspec.yml</code>
+      <td><strong>Optional</strong>. If you have a custom CodeBuild Buildspec file for your app, provide relative path to the file. E.g. <code>buildspec.yml</code> or <code>./buildspec.yml</code>
       </td>
     </tr>
     <tr>

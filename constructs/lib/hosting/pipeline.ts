@@ -2,7 +2,6 @@ import fs from 'fs';
 import * as yaml from "yaml";
 import { Construct } from "constructs";
 import { Aws, Duration, RemovalPolicy, Stack, SecretValue } from 'aws-cdk-lib';
-import * as ssm from "aws-cdk-lib/aws-ssm";
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { Artifacts, Project, PipelineProject, LinuxBuildImage, LinuxArmBuildImage, ComputeType, Source, BuildSpec } from "aws-cdk-lib/aws-codebuild";
 import { Artifact, Pipeline, StageProps } from 'aws-cdk-lib/aws-codepipeline';
@@ -21,6 +20,7 @@ export interface PipelineProps {
     owner: string;
     repo: string;
     branchOrRef: string;
+    rootdir: string;
   };
   githubAccessTokenArn: string;
 
@@ -77,6 +77,9 @@ export class PipelineConstruct extends Construct {
       enforceSSL: true,
     });
 
+    this.codeBuildProject = this.createBuildProject(props);
+    this.codePipeline = this.createPipeline(props);      
+
     // Define the lambda function for syncing buckets
     this.syncBucketsFunction = new Function(this, 'SyncBucketsFunction', {
       runtime: Runtime.NODEJS_20_X,
@@ -90,9 +93,21 @@ export class PipelineConstruct extends Construct {
       },
     });
 
-    this.codeBuildProject = this.createBuildProject(props);
-    this.codePipeline = this.createPipeline(props);      
+    this.addSyncStepToPipeline();
+  }
 
+  private addSyncStepToPipeline() {
+        // Sync Step
+        this.codePipeline.addStage({
+          stageName: 'Sync',
+          actions: [
+            new LambdaInvokeAction({
+              actionName: 'SyncBucketsAction',
+              lambda: this.syncBucketsFunction,
+              runOrder: 4,
+            }),
+          ],
+        });
   }
 
   // Function to get GitHub Access Token from SSM Parameter Store
@@ -121,14 +136,17 @@ export class PipelineConstruct extends Construct {
     });
 
     // Read the buildspec.yml file
-    const buildSpecObj = fs.readFileSync(props.buildSpecFilePath, "utf8");
-    const buildSpecYaml = yaml.parse(buildSpecObj);
+    let buildSpecYaml;
+    if (props.buildSpecFilePath) {
+      const buildSpecFile = fs.readFileSync(props.buildSpecFilePath, "utf8");
+      buildSpecYaml = yaml.parse(buildSpecFile);  
+    }
 
     // create the cloudbuild project
     const project = new Project(this, "CodeBuildProject", {
       projectName: `${props.application}-${props.service}-${props.environment}-buildproject`,
       buildSpec: 
-        buildSpecObj 
+        buildSpecYaml 
           ? BuildSpec.fromObject(buildSpecYaml) 
           : BuildSpec.fromObject({
             version: '0.2',
@@ -138,6 +156,7 @@ export class PipelineConstruct extends Construct {
                         nodejs: props.buildProps?.runtime
                     },
                     commands: [ 
+                      `cd ${props.sourceProps?.rootdir}`,
                       // 'aws cloudfront create-invalidation --distribution-id ${CLOUDFRONT_ID} --paths "/*"',
                       props.buildProps?.installcmd 
                     ]
@@ -148,8 +167,8 @@ export class PipelineConstruct extends Construct {
             },
             artifacts: {
                 files: ['**/*'],
-                'base-directory': props.buildProps?.outputDir,
-                bucket: this.buildOutputBucket.bucketName
+                'base-directory': props.sourceProps?.rootdir,
+                // bucket: this.buildOutputBucket.bucketName
             }
         }),
         source: Source.gitHub({
@@ -157,6 +176,7 @@ export class PipelineConstruct extends Construct {
             owner: props.sourceProps.owner,
             repo: props.sourceProps.repo,
             branchOrRef: props.sourceProps.branchOrRef,
+            webhook: true
         }),
         artifacts: Artifacts.s3({
             bucket: this.buildOutputBucket,
@@ -243,7 +263,7 @@ export class PipelineConstruct extends Construct {
     });
     
     pipeline.addStage({
-      stageName: "Sources",
+      stageName: "Source",
       actions: [sourceAction],
     });
 
@@ -274,18 +294,6 @@ export class PipelineConstruct extends Construct {
     pipeline.addStage({
       stageName: "Deploy",
       actions: [deployAction],
-    });
-
-    // Sync Step
-    pipeline.addStage({
-      stageName: 'Sync',
-      actions: [
-        new LambdaInvokeAction({
-          actionName: 'SyncBucketsAction',
-          lambda: this.syncBucketsFunction,
-          runOrder: 4,
-        }),
-      ],
     });
 
     // return our pipeline

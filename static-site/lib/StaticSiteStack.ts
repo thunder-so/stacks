@@ -1,7 +1,7 @@
 import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { ApplicationConstruct, EnvironmentConstruct, HostingConstruct, PipelineConstruct } from '../../constructs';
-import { StaticSiteProps } from './StaticSiteProps'; 
+import type { StaticSiteProps } from './StaticSiteProps'; 
 
 export class StaticSiteStack extends Stack {
   constructor(scope: Construct, id: string, props?: StaticSiteProps) {
@@ -11,7 +11,7 @@ export class StaticSiteStack extends Stack {
     if (!props?.env) {
       throw new Error('Must provide AWS account and region.');
     }
-    if (!props.application || props.environment || props.service) {
+    if (!props.application || !props.environment || !props.service) {
       throw new Error('Mandatory stack properties missing.');
     }
 
@@ -41,9 +41,10 @@ export class StaticSiteStack extends Stack {
       sourceProps: {
         owner: props.sourceProps?.owner, 
         repo: props.sourceProps?.repo, 
-        branchOrRef: props.sourceProps?.branchOrRef 
+        branchOrRef: props.sourceProps?.branchOrRef, 
+        rootdir: props.sourceProps?.rootdir ? props.sourceProps?.rootdir : ''
       },
-      githubAccessTokenArn: props.githubAccessTokenArn,
+      githubAccessTokenArn: props.githubAccessTokenArn as string,
     });
 
   }

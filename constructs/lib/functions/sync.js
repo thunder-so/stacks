@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
+const codepipeline = new AWS.CodePipeline();
 const { exec } = require('child_process');
 
 exports.handler = async (event, context) => {

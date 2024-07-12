@@ -34,12 +34,13 @@ export interface StaticSiteProps extends StackProps {
       owner: string;
       repo: string;
       branchOrRef: string;
+      rootdir?: string;
     };
 
     /**
      * Provide the ARN to your AWS Parameter Store SecureString param.
      */
-    readonly githubAccessTokenArn?: string;
+    readonly githubAccessTokenArn: string;
   
     /**
      * If you have a custom buildspec.yml file for your app, provide the relative path to the file.
@@ -64,7 +65,7 @@ export interface StaticSiteProps extends StackProps {
     /**
      * Optional. The ARN of the certificate to use on CloudFront for the app to make it accessible via HTTPS.
      */
-    readonly globalCertificateArn: string;
+    readonly globalCertificateArn?: string;
   
     /**
      * Optional. The ID of the hosted zone to create a DNS record for the specified domain.
