@@ -38,7 +38,7 @@ export interface StaticSiteProps extends StackProps {
     };
 
     /**
-     * Provide the ARN to your AWS Parameter Store SecureString param.
+     * Provide the ARN to your Secrets Manager secret.
      */
     readonly githubAccessTokenArn: string;
   

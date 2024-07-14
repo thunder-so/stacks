@@ -20,7 +20,7 @@ const appStackProps: StaticSiteProps = {
 
   // Auto deployment
   // - create a Github personal access token
-  // - store in Parameter Store (SecureString)
+  // - store in Secrets Manager
   githubAccessTokenArn: 'arn:aws:ssm:us-east-1:123456789012:parameter/github-token',
 
   // Either provide a buildspec.yml file OR leave empty and fill out buildProps

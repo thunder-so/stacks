@@ -48,7 +48,9 @@ node_modules/.bin/static-site-init
 
 1. [Create a Github Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for your Github account. This token must be kept secure.
 
-2. [Create a Parameter Store parameter (SecureString)](https://docs.aws.amazon.com/kms/latest/developerguide/services-parameter-store.html) with the Personal Access Token you created earlier. Note the `ARN` of the parameter. E.g. `arn:aws:ssm:<REGION_NAME>:<ACCOUNT_ID>:parameter/<parameter-name>`.
+<!-- 2. [Create a Parameter Store parameter (SecureString)](https://docs.aws.amazon.com/kms/latest/developerguide/services-parameter-store.html) with the Personal Access Token you created earlier. Note the `ARN` of the parameter. E.g. `arn:aws:ssm:<REGION_NAME>:<ACCOUNT_ID>:parameter/<parameter-name>`. -->
+
+2. [Create a Secrets Manager secret](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) with the Personal Access Token you created earlier. Note the `ARN` of the secret. E.g. `arn:aws:secretsmanager:<REGION_NAME>:<ACCOUNT_ID>:secret:<secret-name>`.
 
 3. Input the noted `ARN` to the `githubAccessTokenArn` field in your stack.
 
@@ -159,7 +161,9 @@ The `StaticSiteStack` construct can be configured via the following props:
       <th>
         <code>string</code>
       </th>
-      <td><strong>Required</strong>. Create a Github Personal Access Token, save the token as a parameter in AWS Parameter Store. Provide the ARN. Ensure it is <code>SecureString</code>.
+      <td>
+        <!-- <strong>Required</strong>. Create a Github Personal Access Token, save the token as a parameter in AWS Parameter Store. Provide the ARN. Ensure it is <code>SecureString</code>. -->
+        <strong>Required</strong>. Create a Github Personal Access Token, save the token as a secret in AWS Secrets Manager. Provide the ARN. Ensure it is <code>SecureString</code>.
       </td>
     </tr>
     <!-- <tr><td colspan=3></td></tr> -->
@@ -369,8 +373,8 @@ const appStackProps: StaticSiteProps = {
 
   // Auto deployment
   // - create a Github personal access token
-  // - store in Parameter Store (SecureString)
-  githubAccessTokenArn: 'arn:aws:ssm:us-east-1:123456789012:parameter/github-token',
+  // - store in Secrets Manager
+  githubAccessTokenArn: 'arn:aws:secretsmanager:us-east-1:123456789012:secret/github-token'
 
   // Either provide a buildspec.yml file OR leave empty and fill out buildProps
   buildSpecFilePath: './buildspec.yml',
