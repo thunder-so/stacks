@@ -1,7 +1,9 @@
 import fs from 'fs';
-import * as yaml from "yaml";
+import path from 'path';
+import yaml from "yaml";
+import { fileURLToPath } from 'url';
 import { Construct } from "constructs";
-import { Aws, Duration, RemovalPolicy, Stack, SecretValue } from 'aws-cdk-lib';
+import { Aws, Duration, RemovalPolicy, Stack, SecretValue, CfnParameter } from 'aws-cdk-lib';
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { Artifacts, Project, PipelineProject, LinuxBuildImage, LinuxArmBuildImage, ComputeType, Source, BuildSpec } from "aws-cdk-lib/aws-codebuild";
 import { Artifact, Pipeline, StageProps } from 'aws-cdk-lib/aws-codepipeline';
@@ -78,52 +80,37 @@ export class PipelineConstruct extends Construct {
     });
 
     this.codeBuildProject = this.createBuildProject(props);
-    this.codePipeline = this.createPipeline(props);      
 
-    // Define the lambda function for syncing buckets
+    // Lambda for syncing buckets
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const syncFunctionPath = path.resolve(__dirname, '../functions/sync/');
+
     this.syncBucketsFunction = new Function(this, 'SyncBucketsFunction', {
       runtime: Runtime.NODEJS_20_X,
       handler: 'sync.handler',
-      code: Code.fromAsset('../functions/sync.js'),
-      environment: {
-        PIPELINE_NAME: this.codePipeline.pipelineName,
-        OUTPUT_BUCKET: this.buildOutputBucket.bucketName,
-        COMMIT_ID: this.commitId,
-        HOSTING_BUCKET: props.HostingBucket.bucketName,
-      },
+      code: Code.fromAsset(syncFunctionPath),
+      // environment: {
+      //   PIPELINE_NAME: this.codePipeline.pipelineName,
+      //   OUTPUT_BUCKET: this.buildOutputBucket.bucketName,
+      //   COMMIT_ID: this.commitId,
+      //   HOSTING_BUCKET: props.HostingBucket.bucketName,
+      // },
     });
 
-    this.addSyncStepToPipeline();
-  }
+    // create pipeline
+    this.codePipeline = this.createPipeline(props);
 
-  private addSyncStepToPipeline() {
-        // Sync Step
-        this.codePipeline.addStage({
-          stageName: 'Sync',
-          actions: [
-            new LambdaInvokeAction({
-              actionName: 'SyncBucketsAction',
-              lambda: this.syncBucketsFunction,
-              runOrder: 4,
-            }),
-          ],
-        });
+    // add environment variables to syncBucketsFunction
+    // this.syncBucketsFunction.addEnvironment('PIPELINE_NAME', this.codePipeline.pipelineName);
+
   }
 
   // Function to get GitHub Access Token from SSM Parameter Store
   private getGithubAccessToken(arn: string): SecretValue {
-    return SecretValue.ssmSecure(arn);
+    // return SecretValue.ssmSecure(arn);
+    return SecretValue.secretsManager(arn);
   }
-
-  // private refParam(props: PipelineProps) {
-  //   // Create a SSM Parameter to store the Github commit ref
-  //   return new ssm.StringParameter(this, "RefParam", {
-  //     parameterName: `/staticsite/svc-${props.service}/ref`,
-  //     stringValue: "init",
-  //     description: "commit ref",
-  //     tier: ssm.ParameterTier.STANDARD,
-  //   });
-  // }
 
   // Create CodeBuild Project
   private createBuildProject(props: PipelineProps): Project {
@@ -176,7 +163,7 @@ export class PipelineConstruct extends Construct {
             owner: props.sourceProps.owner,
             repo: props.sourceProps.repo,
             branchOrRef: props.sourceProps.branchOrRef,
-            webhook: true
+            // webhook: true
         }),
         artifacts: Artifacts.s3({
             bucket: this.buildOutputBucket,
@@ -213,6 +200,7 @@ export class PipelineConstruct extends Construct {
 
   // Create pipeline
   private createPipeline(props: PipelineProps): Pipeline {
+
     // build artifact bucket
     const artifactBucket = new Bucket(this, "ArtifactBucket", {
       encryption: BucketEncryption.S3_MANAGED,
@@ -269,6 +257,9 @@ export class PipelineConstruct extends Construct {
 
     this.commitId = sourceAction.variables.commitId;
 
+    // console.log('pipeline', pipeline.pipelineName)
+    // console.log('syncbucketfunction', this.syncBucketsFunction.functionName)
+
     // Build Step
     const buildAction = new CodeBuildAction({
       actionName: `${props.application}-${props.service}-${props.environment}-buildaction`,
@@ -295,6 +286,25 @@ export class PipelineConstruct extends Construct {
       stageName: "Deploy",
       actions: [deployAction],
     });
+
+    // Sync step
+    pipeline.addStage({
+      stageName: 'Sync',
+      actions: [
+        new LambdaInvokeAction({
+          actionName: 'SyncBucketsAction',
+          lambda: this.syncBucketsFunction,
+          runOrder: 4,
+        }),
+      ],
+    });
+
+    // add environment variables to syncBucketsFunction
+    // this.syncBucketsFunction.addEnvironment('PIPELINE_NAME', pipeline.pipelineName);
+    // this.syncBucketsFunction.addEnvironment('PIPELINE_NAME', '');
+    this.syncBucketsFunction.addEnvironment('OUTPUT_BUCKET', this.buildOutputBucket.bucketName);
+    this.syncBucketsFunction.addEnvironment('COMMIT_ID', this.commitId);
+    this.syncBucketsFunction.addEnvironment('HOSTING_BUCKET', props.HostingBucket.bucketName);
 
     // return our pipeline
     return pipeline;

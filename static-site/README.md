@@ -20,12 +20,12 @@ This package uses the `npm` package manager and is an ES Module.
 Install the package and its required dependencies:
 
 ```bash
-npm install thunder-so/stacks --save-dev
+npm i @thunderso/stacks --save-dev
 ```
 
 If you do not have already, your `package.json` must also contain `aws-cdk-lib` and `tsx`:
 ```bash
-npm install aws-cdk-lib tsx --save-dev
+npm i aws-cdk-lib tsx --save-dev
 ```
 
 ## Setup

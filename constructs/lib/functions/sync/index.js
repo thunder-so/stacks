@@ -6,13 +6,13 @@ const { exec } = require('child_process');
 exports.handler = async (event, context) => {
     console.log('event is 👉', JSON.stringify(event, null, 4));
 
-    const pipelineName = process.env.PIPELINE_NAME;
+    // const pipelineName = process.env.PIPELINE_NAME;
     const outputBucket = process.env.OUTPUT_BUCKET;
     const commitId = process.env.COMMIT_ID;
     const hostingBucket = process.env.HOSTING_BUCKET;
 
     await syncS3Buckets(outputBucket, commitId, hostingBucket);
-    await startPipeline(pipelineName);
+    // await startPipeline(pipelineName);
 
 };
 
@@ -31,16 +31,16 @@ async function syncS3Buckets(outputBucket, commitId, hostingBucket) {
     });
 };
 
-async function startPipeline(pipelineName) {
-    const params = {
-        name: pipelineName
-    };
+// async function startPipeline(pipelineName) {
+//     const params = {
+//         name: pipelineName
+//     };
 
-    try {
-        await codepipeline.startPipelineExecution(params);
-        console.log(`Pipeline ${pipelineName} started`);
-    } catch (err) {
-        console.log(`Error starting pipeline ${pipelineName}: ${err}`);
-        throw err;
-    }
-};
+//     try {
+//         await codepipeline.startPipelineExecution(params);
+//         console.log(`Pipeline ${pipelineName} started`);
+//     } catch (err) {
+//         console.log(`Error starting pipeline ${pipelineName}: ${err}`);
+//         throw err;
+//     }
+// };
