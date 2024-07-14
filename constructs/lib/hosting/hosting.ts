@@ -123,73 +123,115 @@ export class HostingConstruct extends Construct {
         });
         this.accessLogsBucket = accessLogsBucket;
 
-        // ResponseHeadersPolicy
-        const responseHeadersPolicy = new ResponseHeadersPolicy(
-            this,
-            "ResponseHeadersPolicy",
-            {
-              responseHeadersPolicyName: "ResponseHeadersPolicy" + Aws.STACK_NAME + "-" + Aws.REGION,
-              comment: "ResponseHeadersPolicy" + Aws.STACK_NAME + "-" + Aws.REGION,
-              securityHeadersBehavior: {
-                contentTypeOptions: { override: true },
-                frameOptions: {
-                  frameOption: HeadersFrameOption.DENY,
-                  override: true,
-                },
-                referrerPolicy: {
-                  referrerPolicy:
-                    HeadersReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
-                  override: false,
-                },
-                strictTransportSecurity: {
-                  accessControlMaxAge: Duration.seconds(31536000),
-                  includeSubdomains: true,
-                  override: true,
-                },
-                xssProtection: { protection: true, modeBlock: true, override: true },
-                
-              },
-              removeHeaders: ['age' , 'date'],
-            }
-        );
         // defaultCachePolicy
-        const defaultCachePolicy = new CachePolicy(
-            this,
-            "DefaultCachePolicy",
-            {
-              cachePolicyName: "CachePolicy" + Aws.STACK_NAME + "-" + Aws.REGION,
-              comment: "Default policy - " + Aws.STACK_NAME + "-" + Aws.REGION,
-              defaultTtl: Duration.days(365),
-              minTtl: Duration.days(365),
-              maxTtl: Duration.days(365),
-              cookieBehavior: CacheCookieBehavior.none(),
-              headerBehavior: CacheHeaderBehavior.none(),
-              queryStringBehavior: CacheQueryStringBehavior.none(),
-              enableAcceptEncodingGzip: true,
-              enableAcceptEncodingBrotli: true,
-            }
-        );
+        const defaultCachePolicy = new CachePolicy(this, "DefaultCachePolicy", {
+          cachePolicyName: "CachePolicy" + Aws.STACK_NAME + "-" + Aws.REGION,
+          comment: "Default policy - " + Aws.STACK_NAME + "-" + Aws.REGION,
+          defaultTtl: Duration.days(365),
+          minTtl: Duration.days(365),
+          maxTtl: Duration.days(365),
+          cookieBehavior: CacheCookieBehavior.none(),
+          headerBehavior: CacheHeaderBehavior.none(),
+          queryStringBehavior: CacheQueryStringBehavior.none(),
+          enableAcceptEncodingGzip: true,
+          enableAcceptEncodingBrotli: true,
+        });
+        
         // imgCachePolicy
+        const imgCachePolicy = new CachePolicy(this, "ImagesCachePolicy", {
+          cachePolicyName: "ImagesCachePolicy" + Aws.STACK_NAME + "-" + Aws.REGION,
+          comment: "Images cache policy - " + Aws.STACK_NAME + "-" + Aws.REGION,
+          defaultTtl: Duration.days(365),
+          minTtl: Duration.days(365),
+          maxTtl: Duration.days(365),
+          cookieBehavior: CacheCookieBehavior.none(),
+          headerBehavior: CacheHeaderBehavior.none(),
+          queryStringBehavior: CacheQueryStringBehavior.none(),
+        });
+        
         // staticAssetsCachePolicy
+        const staticAssetsCachePolicy = new CachePolicy(this, "staticAssetsCachePolicy", {
+          cachePolicyName: "StaticAssetsCachePolicy" + Aws.STACK_NAME + "-" + Aws.REGION,
+          comment: "Static assets cache policy - " + Aws.STACK_NAME + "-" + Aws.REGION,
+          defaultTtl: Duration.days(365),
+          minTtl: Duration.days(365),
+          maxTtl: Duration.days(365),
+          cookieBehavior: CacheCookieBehavior.none(),
+          headerBehavior: CacheHeaderBehavior.none(),
+          queryStringBehavior: CacheQueryStringBehavior.none(),
+        });
 
-        // defaultBehavior
-        const defaultBehavior: BehaviorOptions = {
-            origin: this.s3Origin,
-            responseHeadersPolicy: responseHeadersPolicy,
-            cachePolicy: defaultCachePolicy,
-            allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
-            viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-            // functionAssociations: [
-            //   {
-            //     function: params.changeUri,
-            //     eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
-            //   },
-            // ],
-        };
+        // ResponseHeadersPolicy
+        const responseHeadersPolicy = new ResponseHeadersPolicy(this, "ResponseHeadersPolicy", {
+            responseHeadersPolicyName: "ResponseHeadersPolicy" + Aws.STACK_NAME + "-" + Aws.REGION,
+            comment: "ResponseHeadersPolicy" + Aws.STACK_NAME + "-" + Aws.REGION,
+            securityHeadersBehavior: {
+              contentTypeOptions: { override: true },
+              frameOptions: {
+                frameOption: HeadersFrameOption.DENY,
+                override: true,
+              },
+              referrerPolicy: {
+                referrerPolicy:
+                  HeadersReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
+                override: false,
+              },
+              strictTransportSecurity: {
+                accessControlMaxAge: Duration.seconds(31536000),
+                includeSubdomains: true,
+                override: true,
+              },
+              xssProtection: { protection: true, modeBlock: true, override: true },
+              
+            },
+            removeHeaders: ['age' , 'date'],
+      });
 
-        // imgBehaviour
-        // staticAssetsBehaviour
-        // CfnOriginAccessControl
+      // defaultBehavior
+      const defaultBehavior: BehaviorOptions = {
+          origin: this.s3Origin,
+          responseHeadersPolicy: responseHeadersPolicy,
+          cachePolicy: defaultCachePolicy,
+          allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
+          viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          // functionAssociations: [
+          //   {
+          //     function: params.changeUri,
+          //     eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+          //   },
+          // ],
+      };
+
+      // imgBehaviour
+      const imgBehaviour: BehaviorOptions = {
+        origin: this.s3Origin,
+        responseHeadersPolicy: responseHeadersPolicy,
+        cachePolicy: imgCachePolicy,
+        allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
+        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        // functionAssociations: [
+        //   {
+        //     function: params.changeUri,
+        //     eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+        //   },
+        // ],
+      };
+
+      // staticAssetsBehaviour
+      const staticAssetsBehaviour: BehaviorOptions = {
+        origin: this.s3Origin,
+        compress: true,
+        responseHeadersPolicy: responseHeadersPolicy,
+        cachePolicy: staticAssetsCachePolicy,
+        allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
+        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        // functionAssociations: [
+        //   {
+        //     function: params.changeUri,
+        //     eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+        //   },
+        // ],
+      };
 
         // finally, create distribution
         const distributionName = `${props.application}-${props.service}-${props.environment}-cdn`;
@@ -203,18 +245,18 @@ export class HostingConstruct extends Construct {
             ...(accessLogsBucket ? { logFilePrefix: `${distributionName}-logs` } : {}),
             minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
             defaultBehavior: defaultBehavior,
-            // additionalBehaviors: {
-            //   "*.jpg": imgBehaviour,
-            //   "*.jpeg": imgBehaviour,
-            //   "*.png": imgBehaviour,
-            //   "*.gif": imgBehaviour,
-            //   "*.bmp": imgBehaviour,
-            //   "*.tiff": imgBehaviour,
-            //   "*.ico": imgBehaviour,
-            //   "*.js": staticAssetsBehaviour,
-            //   "*.css": staticAssetsBehaviour,
-            //   "*.html": staticAssetsBehaviour,
-            // },
+            additionalBehaviors: {
+              "*.jpg": imgBehaviour,
+              "*.jpeg": imgBehaviour,
+              "*.png": imgBehaviour,
+              "*.gif": imgBehaviour,
+              "*.bmp": imgBehaviour,
+              "*.tiff": imgBehaviour,
+              "*.ico": imgBehaviour,
+              "*.js": staticAssetsBehaviour,
+              "*.css": staticAssetsBehaviour,
+              "*.html": staticAssetsBehaviour,
+            },
             ...(props.domain && props.globalCertificateArn
               ? {
                   domainNames: [props.domain],

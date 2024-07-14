@@ -102,7 +102,10 @@ export class PipelineConstruct extends Construct {
     this.codePipeline = this.createPipeline(props);
 
     // add environment variables to syncBucketsFunction
-    // this.syncBucketsFunction.addEnvironment('PIPELINE_NAME', this.codePipeline.pipelineName);
+    // this.syncBucketsFunction.addEnvironment('PIPELINE_NAME', this.codePipeline.pipelineName); // Circular dependency between resources
+    this.syncBucketsFunction.addEnvironment('OUTPUT_BUCKET', this.buildOutputBucket.bucketName);
+    this.syncBucketsFunction.addEnvironment('COMMIT_ID', this.commitId);
+    this.syncBucketsFunction.addEnvironment('HOSTING_BUCKET', props.HostingBucket.bucketName);
 
   }
 
@@ -255,10 +258,8 @@ export class PipelineConstruct extends Construct {
       actions: [sourceAction],
     });
 
+    // extract the commitId from the sourceAction
     this.commitId = sourceAction.variables.commitId;
-
-    // console.log('pipeline', pipeline.pipelineName)
-    // console.log('syncbucketfunction', this.syncBucketsFunction.functionName)
 
     // Build Step
     const buildAction = new CodeBuildAction({
@@ -302,9 +303,6 @@ export class PipelineConstruct extends Construct {
     // add environment variables to syncBucketsFunction
     // this.syncBucketsFunction.addEnvironment('PIPELINE_NAME', pipeline.pipelineName);
     // this.syncBucketsFunction.addEnvironment('PIPELINE_NAME', '');
-    this.syncBucketsFunction.addEnvironment('OUTPUT_BUCKET', this.buildOutputBucket.bucketName);
-    this.syncBucketsFunction.addEnvironment('COMMIT_ID', this.commitId);
-    this.syncBucketsFunction.addEnvironment('HOSTING_BUCKET', props.HostingBucket.bucketName);
 
     // return our pipeline
     return pipeline;
