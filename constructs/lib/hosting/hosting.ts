@@ -79,10 +79,13 @@ export class HostingConstruct extends Construct {
 
         // Hosting bucket access log bucket
         const hostingLogsBucket = new Bucket(this, "HostingBucketLogsBucket", {
+            bucketName: `${bucketNamePrefix}-hosting-logs`,
             encryption: BucketEncryption.S3_MANAGED,
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
             objectOwnership: ObjectOwnership.OBJECT_WRITER,
             enforceSSL: true,
+            removalPolicy: RemovalPolicy.DESTROY,
+            autoDeleteObjects: true,
         });
 
         // primary hosting bucket
@@ -114,12 +117,17 @@ export class HostingConstruct extends Construct {
      * @private
      */
     private createCloudfrontDistribution(props: HostingProps): IDistribution {
+        const bucketNamePrefix = `${props.application}-${props.service}-${props.environment}`;
+
         // access logs bucket
         const accessLogsBucket = new Bucket(this, "AccessLogsBucket", {
+            bucketName: `${bucketNamePrefix}-access-logs`,
             encryption: BucketEncryption.S3_MANAGED,
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
             objectOwnership: ObjectOwnership.OBJECT_WRITER,
             enforceSSL: true,
+            removalPolicy: RemovalPolicy.DESTROY,
+            autoDeleteObjects: true,
         });
         this.accessLogsBucket = accessLogsBucket;
 

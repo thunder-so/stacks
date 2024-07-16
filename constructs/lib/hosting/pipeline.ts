@@ -77,6 +77,8 @@ export class PipelineConstruct extends Construct {
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       objectOwnership: ObjectOwnership.OBJECT_WRITER,
       enforceSSL: true,
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
     });
 
     this.codeBuildProject = this.createBuildProject(props);
@@ -117,12 +119,17 @@ export class PipelineConstruct extends Construct {
 
   // Create CodeBuild Project
   private createBuildProject(props: PipelineProps): Project {
+    const bucketNamePrefix = `${props.application}-${props.service}-${props.environment}`;
+
     // build logs bucket
     const buildLogsBucket = new Bucket(this, "BuildLogsBucket", {
+      bucketName: `${bucketNamePrefix}-build-logs`,
       encryption: BucketEncryption.S3_MANAGED,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       objectOwnership: ObjectOwnership.OBJECT_WRITER,
       enforceSSL: true,
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
     });
 
     // Read the buildspec.yml file
@@ -203,14 +210,16 @@ export class PipelineConstruct extends Construct {
 
   // Create pipeline
   private createPipeline(props: PipelineProps): Pipeline {
+    const bucketNamePrefix = `${props.application}-${props.service}-${props.environment}`;
 
     // build artifact bucket
     const artifactBucket = new Bucket(this, "ArtifactBucket", {
+      bucketName: `${bucketNamePrefix}-artifacts-logs`,
       encryption: BucketEncryption.S3_MANAGED,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-      autoDeleteObjects: true,
-      removalPolicy: RemovalPolicy.DESTROY,
       enforceSSL: true,
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
     });
 
     // Setup CodePipeline
