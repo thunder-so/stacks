@@ -268,8 +268,7 @@ export class HostingConstruct extends Construct {
             ...(props.domain && props.globalCertificateArn
               ? {
                   domainNames: [props.domain],
-                  certificate: Certificate.fromCertificateArn(this, `${props.service}-global-certificate`,props.globalCertificateArn
-                  ),
+                  certificate: Certificate.fromCertificateArn(this, `${props.service}-global-certificate`, props.globalCertificateArn),
                 }
               : {}),
           });

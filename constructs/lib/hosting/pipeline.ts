@@ -8,7 +8,7 @@ import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncrypt
 import { Artifacts, Project, PipelineProject, LinuxBuildImage, LinuxArmBuildImage, ComputeType, Source, BuildSpec } from "aws-cdk-lib/aws-codebuild";
 import { Artifact, Pipeline, StageProps } from 'aws-cdk-lib/aws-codepipeline';
 import { PolicyStatement, Effect, ArnPrincipal } from 'aws-cdk-lib/aws-iam';
-import { GitHubSourceAction, CodeBuildAction, S3DeployAction, LambdaInvokeAction } from 'aws-cdk-lib/aws-codepipeline-actions';
+import { GitHubSourceAction, GitHubTrigger, CodeBuildAction, S3DeployAction, LambdaInvokeAction } from 'aws-cdk-lib/aws-codepipeline-actions';
 import { Function, Runtime, Code } from 'aws-cdk-lib/aws-lambda';
 
 export interface PipelineProps {
@@ -115,6 +115,8 @@ export class PipelineConstruct extends Construct {
   private getGithubAccessToken(arn: string): SecretValue {
     // return SecretValue.ssmSecure(arn);
     return SecretValue.secretsManager(arn);
+    // const secretValue = SecretValue.secretsManager(arn);
+    // return secretValue.unsafeUnwrap();
   }
 
   // Create CodeBuild Project
@@ -260,6 +262,7 @@ export class PipelineConstruct extends Construct {
       branch: props.sourceProps.branchOrRef,
       oauthToken: githubAccessToken,
       output: sourceOutput,
+      trigger: GitHubTrigger.POLL
     });
     
     pipeline.addStage({

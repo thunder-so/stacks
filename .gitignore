@@ -134,3 +134,6 @@ dist
 # examples
 examples
 .example
+
+# AWS CDK
+cdk.out
