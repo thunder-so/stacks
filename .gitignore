@@ -132,7 +132,6 @@ dist
 .vscode
 
 # examples
-examples
 .example
 
 # AWS CDK
