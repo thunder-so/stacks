@@ -20,5 +20,8 @@
     "test": "jest --coverage",
     "clean": "tsc -b --clean",
     "watch": "tsc -b -w"
+  },
+  "dependencies": {
+    "@aws-solutions-constructs/core": "^2.64.0"
   }
 }

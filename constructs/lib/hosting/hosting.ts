@@ -2,10 +2,11 @@ import { Aws, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { Construct } from "constructs";
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { HttpOrigin, S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
-import { Distribution, type IDistribution, CachePolicy, SecurityPolicyProtocol, HttpVersion, PriceClass, ResponseHeadersPolicy, HeadersFrameOption, HeadersReferrerPolicy, BehaviorOptions, AllowedMethods, ViewerProtocolPolicy, CacheCookieBehavior, CacheHeaderBehavior, CacheQueryStringBehavior, KeyValueStore } from "aws-cdk-lib/aws-cloudfront";
+import { Distribution, type IDistribution, CachePolicy, SecurityPolicyProtocol, HttpVersion, PriceClass, ResponseHeadersPolicy, HeadersFrameOption, HeadersReferrerPolicy, BehaviorOptions, AllowedMethods, ViewerProtocolPolicy, CacheCookieBehavior, CacheHeaderBehavior, CacheQueryStringBehavior, CfnOriginAccessControl } from "aws-cdk-lib/aws-cloudfront";
 import { AaaaRecord, ARecord, HostedZone, type IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { CloudFrontTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
+import { createCloudFrontDistributionForS3, CreateCloudFrontDistributionForS3Props, CreateCloudFrontDistributionForS3Response, CloudFrontProps } from '@aws-solutions-constructs/core'
 
 export interface HostingProps {
     application: string;
@@ -39,12 +40,7 @@ export class HostingConstruct extends Construct {
      * The CloudFront distribution origin that routes to S3 HTTP server.
      */
     private s3Origin: S3Origin;
-
-    /**
-     * The cloudfront key-value store where we keep the commit hash
-     */
-    // private kv: KeyValueStore;
-
+    
 
     constructor(scope: Construct, id: string, props: HostingProps) {
         super(scope, id)
@@ -62,12 +58,6 @@ export class HostingConstruct extends Construct {
         }
 
     }
-
-    // private createKV(props: HostingProps): KeyValueStore {
-    //     return new KeyValueStore(this, `kv`, {
-    //         keyValueStoreName: `${props.application}-${props.service}-${props.environment}-kv`
-    //     });
-    // }
 
     /**
      * Creates the bucket to store the static deployment asset files of your site.
@@ -241,17 +231,52 @@ export class HostingConstruct extends Construct {
         // ],
       };
 
+      // const oac = new CfnOriginAccessControl(this, "OAC", {
+      //   originAccessControlConfig: {
+      //     name: "OAC" + "-" + Aws.STACK_NAME + "-" + Aws.REGION,
+      //     originAccessControlOriginType: "s3",
+      //     signingBehavior: "always",
+      //     signingProtocol: "sigv4",
+      //   },
+      // });
+
         // finally, create distribution
         const distributionName = `${props.application}-${props.service}-${props.environment}-cdn`;
 
-        return new Distribution(this, distributionName, {
-            comment: "Stack name: " + Aws.STACK_NAME,
-            defaultRootObject: "index.html",
-            httpVersion: HttpVersion.HTTP2_AND_3,
-            ...(accessLogsBucket ? { enableLogging: true } : {}),
-            ...(accessLogsBucket ? { logBucket: accessLogsBucket } : {}),
-            ...(accessLogsBucket ? { logFilePrefix: `${distributionName}-logs` } : {}),
-            minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
+        // return new Distribution(this, distributionName, {
+        //     comment: "Stack name: " + Aws.STACK_NAME,
+        //     defaultRootObject: "index.html",
+        //     httpVersion: HttpVersion.HTTP2_AND_3,
+        //     ...(accessLogsBucket ? { enableLogging: true } : {}),
+        //     ...(accessLogsBucket ? { logBucket: accessLogsBucket } : {}),
+        //     minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
+        //     defaultBehavior: defaultBehavior,
+        //     additionalBehaviors: {
+        //       "*.jpg": imgBehaviour,
+        //       "*.jpeg": imgBehaviour,
+        //       "*.png": imgBehaviour,
+        //       "*.gif": imgBehaviour,
+        //       "*.bmp": imgBehaviour,
+        //       "*.tiff": imgBehaviour,
+        //       "*.ico": imgBehaviour,
+        //       "*.js": staticAssetsBehaviour,
+        //       "*.css": staticAssetsBehaviour,
+        //       "*.html": staticAssetsBehaviour,
+        //     },
+        //     ...(props.domain && props.globalCertificateArn
+        //       ? {
+        //           domainNames: [props.domain],
+        //           certificate: Certificate.fromCertificateArn(this, `${props.service}-global-certificate`, props.globalCertificateArn),
+        //         }
+        //       : {}),
+        //   });
+
+        // Define the CloudFront distribution using `createCloudFrontDistributionForS3`
+        const cloudFrontDistributionProps: CreateCloudFrontDistributionForS3Props = {
+          sourceBucket: this.hostingBucket,
+          cloudFrontDistributionProps: {
+            enableLogging: true,
+            logBucket: this.accessLogsBucket,
             defaultBehavior: defaultBehavior,
             additionalBehaviors: {
               "*.jpg": imgBehaviour,
@@ -265,13 +290,24 @@ export class HostingConstruct extends Construct {
               "*.css": staticAssetsBehaviour,
               "*.html": staticAssetsBehaviour,
             },
+            responseHeadersPolicy: responseHeadersPolicy,
+            httpVersion: HttpVersion.HTTP2_AND_3,
+            minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
+            defaultRootObject: "index.html",
+            comment: "Stack name: " + Aws.STACK_NAME,
             ...(props.domain && props.globalCertificateArn
               ? {
                   domainNames: [props.domain],
                   certificate: Certificate.fromCertificateArn(this, `${props.service}-global-certificate`, props.globalCertificateArn),
                 }
               : {}),
-          });
+          },
+          httpSecurityHeaders: true
+        };
+
+        // Creating CloudFront distribution
+        const { distribution } = createCloudFrontDistributionForS3(this, distributionName, cloudFrontDistributionProps);
+        this.distribution = distribution;
 
     }
 
