@@ -5,8 +5,8 @@ import { fileURLToPath } from 'url';
 import { Construct } from "constructs";
 import { Aws, Duration, RemovalPolicy, Stack, SecretValue, CfnParameter } from 'aws-cdk-lib';
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
-import { Artifacts, Project, PipelineProject, LinuxBuildImage, LinuxArmBuildImage, ComputeType, Source, BuildSpec } from "aws-cdk-lib/aws-codebuild";
-import { Artifact, Pipeline, StageProps } from 'aws-cdk-lib/aws-codepipeline';
+import { Artifacts, GitHubSourceCredentials, Project, PipelineProject, LinuxBuildImage, LinuxArmBuildImage, ComputeType, Source, BuildSpec } from "aws-cdk-lib/aws-codebuild";
+import { Artifact, Pipeline, PipelineType, StageProps } from 'aws-cdk-lib/aws-codepipeline';
 import { PolicyStatement, Effect, ArnPrincipal } from 'aws-cdk-lib/aws-iam';
 import { GitHubSourceAction, GitHubTrigger, CodeBuildAction, S3DeployAction, LambdaInvokeAction } from 'aws-cdk-lib/aws-codepipeline-actions';
 import { Function, Runtime, Code } from 'aws-cdk-lib/aws-lambda';
@@ -25,6 +25,7 @@ export interface PipelineProps {
     rootdir: string;
   };
   githubAccessTokenArn: string;
+  githubAccessTokenSecret: string;
 
   // build
   buildSpecFilePath?: string;
@@ -112,9 +113,9 @@ export class PipelineConstruct extends Construct {
   }
 
   // Function to get GitHub Access Token from SSM Parameter Store
-  private getGithubAccessToken(arn: string): SecretValue {
+  private getGithubAccessToken(id: string): SecretValue {
     // return SecretValue.ssmSecure(arn);
-    return SecretValue.secretsManager(arn);
+    return SecretValue.secretsManager(id);
     // const secretValue = SecretValue.secretsManager(arn);
     // return secretValue.unsafeUnwrap();
   }
@@ -141,6 +142,11 @@ export class PipelineConstruct extends Construct {
       buildSpecYaml = yaml.parse(buildSpecFile);  
     }
 
+    // Set the github source credentials
+    new GitHubSourceCredentials(this, 'code-build-credentials', {
+      accessToken: SecretValue.secretsManager(props.githubAccessTokenArn)
+    })
+
     // create the cloudbuild project
     const project = new Project(this, "CodeBuildProject", {
       projectName: `${props.application}-${props.service}-${props.environment}-buildproject`,
@@ -166,8 +172,7 @@ export class PipelineConstruct extends Construct {
             },
             artifacts: {
                 files: ['**/*'],
-                'base-directory': props.sourceProps?.rootdir,
-                // bucket: this.buildOutputBucket.bucketName
+                'base-directory': props.sourceProps?.rootdir
             }
         }),
         source: Source.gitHub({
@@ -177,10 +182,10 @@ export class PipelineConstruct extends Construct {
             branchOrRef: props.sourceProps.branchOrRef,
             // webhook: true
         }),
-        artifacts: Artifacts.s3({
-            bucket: this.buildOutputBucket,
-            encryption: undefined, // Encryption disabled
-        }),
+        // artifacts: Artifacts.s3({
+        //     bucket: this.buildOutputBucket,
+        //     encryption: undefined, // Encryption disabled
+        // }),
         environment: {
             // buildImage: LinuxBuildImage.STANDARD_7_0,
             // computeType: ComputeType.MEDIUM,
@@ -196,6 +201,15 @@ export class PipelineConstruct extends Construct {
         }
     });
 
+    // allow project to get secrets
+    project.addToRolePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ["secretsmanager:GetSecretValue"],
+        resources: [props.githubAccessTokenArn]
+      })
+    );
+
     // Add permission for the project to write files in bucket
     this.buildOutputBucket.addToResourcePolicy(
       new PolicyStatement({
@@ -206,6 +220,9 @@ export class PipelineConstruct extends Construct {
         principals: [new ArnPrincipal(project.role.roleArn)],
       })
     );
+
+    // ??
+    this.buildOutputBucket.grantReadWrite(project.grantPrincipal);
 
     return project;
   }
@@ -229,7 +246,17 @@ export class PipelineConstruct extends Construct {
       artifactBucket: artifactBucket,
       pipelineName: `${props.application}-${props.service}-${props.environment}-pipeline`,
       crossAccountKeys: false,
+      pipelineType: PipelineType.V2
     });
+
+    // Allow pipeline to read secrets
+    pipeline.role.addToPrincipalPolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ["secretsmanager:GetSecretValue"],
+        resources: [props.githubAccessTokenArn]
+      })
+    );
 
     // Allow pipeline to read from the artifact bucket
     artifactBucket.addToResourcePolicy(
@@ -252,7 +279,7 @@ export class PipelineConstruct extends Construct {
     );
 
     // Source Step
-    const githubAccessToken = this.getGithubAccessToken(props.githubAccessTokenArn);
+    const githubAccessToken = this.getGithubAccessToken(props.githubAccessTokenSecret);
     const sourceOutput = new Artifact();
 
     const sourceAction = new GitHubSourceAction({
@@ -260,7 +287,8 @@ export class PipelineConstruct extends Construct {
       owner: props.sourceProps.owner,
       repo: props.sourceProps.repo,
       branch: props.sourceProps.branchOrRef,
-      oauthToken: githubAccessToken,
+      // oauthToken: githubAccessToken,
+      oauthToken: SecretValue.secretsManager(props.githubAccessTokenArn),
       output: sourceOutput,
       trigger: GitHubTrigger.POLL
     });

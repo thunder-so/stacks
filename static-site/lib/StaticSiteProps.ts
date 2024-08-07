@@ -41,6 +41,7 @@ export interface StaticSiteProps extends StackProps {
      * Provide the ARN to your Secrets Manager secret.
      */
     readonly githubAccessTokenArn: string;
+    readonly githubAccessTokenSecret: string;
   
     /**
      * If you have a custom buildspec.yml file for your app, provide the relative path to the file.

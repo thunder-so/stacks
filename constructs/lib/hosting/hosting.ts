@@ -1,12 +1,13 @@
 import { Aws, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { Construct } from "constructs";
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
+import { PolicyStatement, Effect, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { HttpOrigin, S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
-import { Distribution, type IDistribution, CachePolicy, SecurityPolicyProtocol, HttpVersion, PriceClass, ResponseHeadersPolicy, HeadersFrameOption, HeadersReferrerPolicy, BehaviorOptions, AllowedMethods, ViewerProtocolPolicy, CacheCookieBehavior, CacheHeaderBehavior, CacheQueryStringBehavior, CfnOriginAccessControl } from "aws-cdk-lib/aws-cloudfront";
+import { CfnDistribution, Distribution, type IDistribution, CachePolicy, SecurityPolicyProtocol, HttpVersion, PriceClass, ResponseHeadersPolicy, HeadersFrameOption, HeadersReferrerPolicy, BehaviorOptions, AllowedMethods, ViewerProtocolPolicy, CacheCookieBehavior, CacheHeaderBehavior, CacheQueryStringBehavior, CfnOriginAccessControl } from "aws-cdk-lib/aws-cloudfront";
 import { AaaaRecord, ARecord, HostedZone, type IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { CloudFrontTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
-import { createCloudFrontDistributionForS3, CreateCloudFrontDistributionForS3Props, CreateCloudFrontDistributionForS3Response, CloudFrontProps } from '@aws-solutions-constructs/core'
+import { createCloudFrontDistributionForS3, CreateCloudFrontDistributionForS3Props, CreateCloudFrontDistributionForS3Response } from '@aws-solutions-constructs/core'
 
 export interface HostingProps {
     application: string;
@@ -46,8 +47,8 @@ export class HostingConstruct extends Construct {
         super(scope, id)
 
         // this.kv = this.createKV(props);
-        this.hostingBucket = this.createHostingBucket(props);
-        this.distribution = this.createCloudfrontDistribution(props);
+        this.createHostingBucket(props);
+        this.createCloudfrontDistribution(props);
 
         if(props.domain) {
             this.createDnsRecords(props);
@@ -64,7 +65,7 @@ export class HostingConstruct extends Construct {
      *
      * @private
      */
-    private createHostingBucket(props: HostingProps): IBucket {
+    private createHostingBucket(props: HostingProps) {
         const bucketNamePrefix = `${props.application}-${props.service}-${props.environment}`;
 
         // Hosting bucket access log bucket
@@ -98,7 +99,7 @@ export class HostingConstruct extends Construct {
         // Setting the origin to HTTP server
         this.s3Origin = new S3Origin(bucket);
 
-        return bucket;
+        this.hostingBucket = bucket;
     }
 
     /**
@@ -106,7 +107,7 @@ export class HostingConstruct extends Construct {
      * @param props 
      * @private
      */
-    private createCloudfrontDistribution(props: HostingProps): IDistribution {
+    private createCloudfrontDistribution(props: HostingProps) {
         const bucketNamePrefix = `${props.application}-${props.service}-${props.environment}`;
 
         // access logs bucket
@@ -243,72 +244,67 @@ export class HostingConstruct extends Construct {
         // finally, create distribution
         const distributionName = `${props.application}-${props.service}-${props.environment}-cdn`;
 
-        // return new Distribution(this, distributionName, {
-        //     comment: "Stack name: " + Aws.STACK_NAME,
-        //     defaultRootObject: "index.html",
-        //     httpVersion: HttpVersion.HTTP2_AND_3,
-        //     ...(accessLogsBucket ? { enableLogging: true } : {}),
-        //     ...(accessLogsBucket ? { logBucket: accessLogsBucket } : {}),
-        //     minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
-        //     defaultBehavior: defaultBehavior,
-        //     additionalBehaviors: {
-        //       "*.jpg": imgBehaviour,
-        //       "*.jpeg": imgBehaviour,
-        //       "*.png": imgBehaviour,
-        //       "*.gif": imgBehaviour,
-        //       "*.bmp": imgBehaviour,
-        //       "*.tiff": imgBehaviour,
-        //       "*.ico": imgBehaviour,
-        //       "*.js": staticAssetsBehaviour,
-        //       "*.css": staticAssetsBehaviour,
-        //       "*.html": staticAssetsBehaviour,
-        //     },
-        //     ...(props.domain && props.globalCertificateArn
-        //       ? {
-        //           domainNames: [props.domain],
-        //           certificate: Certificate.fromCertificateArn(this, `${props.service}-global-certificate`, props.globalCertificateArn),
-        //         }
-        //       : {}),
-        //   });
+        const distributionProps = {
+          comment: "Stack name: " + Aws.STACK_NAME,
+          enableLogging: true,
+          logBucket: this.accessLogsBucket,
+          defaultBehavior: defaultBehavior,
+          additionalBehaviors: {
+            "*.jpg": imgBehaviour,
+            "*.jpeg": imgBehaviour,
+            "*.png": imgBehaviour,
+            "*.gif": imgBehaviour,
+            "*.bmp": imgBehaviour,
+            "*.tiff": imgBehaviour,
+            "*.ico": imgBehaviour,
+            "*.js": staticAssetsBehaviour,
+            "*.css": staticAssetsBehaviour,
+            "*.html": staticAssetsBehaviour,
+          },
+          responseHeadersPolicy: responseHeadersPolicy,
+          httpVersion: HttpVersion.HTTP2_AND_3,
+          minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
+          defaultRootObject: "index.html",
+          ...(props.domain && props.globalCertificateArn
+            ? {
+                domainNames: [props.domain],
+                certificate: Certificate.fromCertificateArn(this, `${props.service}-global-certificate`, props.globalCertificateArn),
+              }
+            : {}),
+        }
+
+        this.distribution = new Distribution(this, distributionName, distributionProps);
 
         // Define the CloudFront distribution using `createCloudFrontDistributionForS3`
         const cloudFrontDistributionProps: CreateCloudFrontDistributionForS3Props = {
           sourceBucket: this.hostingBucket,
-          cloudFrontDistributionProps: {
-            enableLogging: true,
-            logBucket: this.accessLogsBucket,
-            defaultBehavior: defaultBehavior,
-            additionalBehaviors: {
-              "*.jpg": imgBehaviour,
-              "*.jpeg": imgBehaviour,
-              "*.png": imgBehaviour,
-              "*.gif": imgBehaviour,
-              "*.bmp": imgBehaviour,
-              "*.tiff": imgBehaviour,
-              "*.ico": imgBehaviour,
-              "*.js": staticAssetsBehaviour,
-              "*.css": staticAssetsBehaviour,
-              "*.html": staticAssetsBehaviour,
-            },
-            responseHeadersPolicy: responseHeadersPolicy,
-            httpVersion: HttpVersion.HTTP2_AND_3,
-            minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
-            defaultRootObject: "index.html",
-            comment: "Stack name: " + Aws.STACK_NAME,
-            ...(props.domain && props.globalCertificateArn
-              ? {
-                  domainNames: [props.domain],
-                  certificate: Certificate.fromCertificateArn(this, `${props.service}-global-certificate`, props.globalCertificateArn),
-                }
-              : {}),
-          },
+          cloudFrontDistributionProps: distributionProps,
           httpSecurityHeaders: true
         };
 
         // Creating CloudFront distribution
-        const { distribution } = createCloudFrontDistributionForS3(this, distributionName, cloudFrontDistributionProps);
-        this.distribution = distribution;
+        const cloudFrontDistributionForS3Response: CreateCloudFrontDistributionForS3Response = createCloudFrontDistributionForS3(this, distributionName, cloudFrontDistributionProps);
 
+        this.distribution = cloudFrontDistributionForS3Response.distribution;
+
+        // Attach the OriginAccessControl to the CloudFront Distribution, and remove the OriginAccessIdentity
+        // const l1CloudFrontDistribution = this.distribution.node.defaultChild as CfnDistribution;
+        // l1CloudFrontDistribution.addPropertyOverride('DistributionConfig.Origins.0.OriginAccessControlId', cloudFrontDistributionForS3Response.originAccessControl?.attrId);
+
+        // Grant CloudFront permission to get the objects from the s3 bucket origin
+        this.hostingBucket.addToResourcePolicy(
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['s3:GetObject'],
+            principals: [new ServicePrincipal('cloudfront.amazonaws.com')],
+            resources: [this.hostingBucket.arnForObjects('*')],
+            conditions: {
+              StringEquals: {
+                'AWS:SourceArn': `arn:aws:cloudfront::${Aws.ACCOUNT_ID}:distribution/${this.distribution.distributionId}`
+              }
+            }
+          })
+        );
     }
 
     /**
@@ -317,11 +313,12 @@ export class HostingConstruct extends Construct {
      * @param props
      * @private
      */
-    private findHostedZone(props: HostingProps): IHostedZone {
+    private findHostedZone(props: HostingProps): IHostedZone | void {
         const domainParts = props.domain?.split('.');
+        if (!domainParts) return;
 
         return HostedZone.fromHostedZoneAttributes(this, `${props.service}-hosted-zone`, {
-            hostedZoneId: props.hostedZoneId,
+            hostedZoneId: props.hostedZoneId as string,
             zoneName: domainParts[domainParts.length - 1] // Support subdomains
         });
     }
@@ -339,14 +336,14 @@ export class HostingConstruct extends Construct {
         // Create a record for IPv4
         new ARecord(this, `${props.service}-ipv4-record`, {
             recordName: props.domain,
-            zone: hostedZone,
+            zone: hostedZone as IHostedZone,
             target: dnsTarget,
         });
 
         // Create a record for IPv6
         new AaaaRecord(this, `${props.service}-ipv6-record`, {
             recordName: props.domain,
-            zone: hostedZone,
+            zone: hostedZone as IHostedZone,
             target: dnsTarget,
         });
     }

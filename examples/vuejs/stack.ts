@@ -24,6 +24,7 @@ const appStackProps: StaticSiteProps = {
   // - create a Github personal access token
   // - store in Secrets Manager
   githubAccessTokenArn: 'arn:aws:secretsmanager:us-east-1:665186350589:secret:GithubPersonalAccessToken-pAwE1v',
+  githubAccessTokenSecret: 'GithubPersonalAccessToken',
 
   // Either provide a buildspec.yml file OR leave empty and fill out buildProps
   // buildSpecFilePath: '',

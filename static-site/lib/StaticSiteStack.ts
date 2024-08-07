@@ -45,6 +45,7 @@ export class StaticSiteStack extends Stack {
         rootdir: props.sourceProps?.rootdir ? props.sourceProps?.rootdir : ''
       },
       githubAccessTokenArn: props.githubAccessTokenArn as string,
+      githubAccessTokenSecret: props.githubAccessTokenSecret as string,
     });
 
   }
