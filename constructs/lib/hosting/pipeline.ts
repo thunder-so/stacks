@@ -157,7 +157,7 @@ export class PipelineConstruct extends Construct {
             },
             artifacts: {
                 files: ['**/*'],
-                'base-directory': props.sourceProps?.rootdir
+                // 'base-directory': props.sourceProps?.rootdir
             }
         }),
         source: Source.gitHub({
@@ -265,6 +265,7 @@ export class PipelineConstruct extends Construct {
 
     // Source Step
     const sourceOutput = new Artifact();
+    const buildOutput = new Artifact();
 
     const sourceAction = new GitHubSourceAction({
       actionName: 'GithubSourceAction',
@@ -289,6 +290,7 @@ export class PipelineConstruct extends Construct {
       actionName: 'BuildAction',
       project: this.codeBuildProject,
       input: sourceOutput,
+      outputs: [buildOutput],
       runOrder: 2,
     });
 
@@ -300,9 +302,9 @@ export class PipelineConstruct extends Construct {
     // Deploy Step
     const deployAction = new S3DeployAction({
       actionName: 'DeployAction',
-      input: sourceOutput,
+      input: buildOutput,
       bucket: this.buildOutputBucket,
-      objectKey: `${sourceAction.variables.commitId}/`, // store in commit hash directories
+      objectKey: `${sourceAction.variables.commitId}`, // store in commit hash directories
       runOrder: 3,
     });
 

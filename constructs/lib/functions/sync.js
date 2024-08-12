@@ -1,7 +1,10 @@
-const AWS = require('aws-sdk');
-const s3 = new AWS.S3();
-const codepipeline = new AWS.CodePipeline();
+// const AWS = require('@aws-sdk/core');
+// const s3 = require('@aws-sdk/client-s3');
+// const codepipeline = require('@aws-sdk/client-codepipeline');
+// const s3 = new AWS.S3();
+// const codepipeline = new AWS.CodePipeline();
 const { exec } = require('child_process');
+const path = '/opt/python/bin/'; // Path where the CLI will be available
 
 exports.handler = async (event, context) => {
     console.log('event is 👉', JSON.stringify(event, null, 4));
@@ -18,7 +21,7 @@ exports.handler = async (event, context) => {
 
 async function syncS3Buckets(outputBucket, commitId, hostingBucket) {
     return new Promise((resolve, reject) => {
-        const command = `aws s3 cp s3://${outputBucket}/${commitId}/ s3://${hostingBucket}/ --recursive --metadata revision=${commitId}`;
+        const command = `${path}aws s3 cp s3://${outputBucket}/${commitId}/ s3://${hostingBucket}/ --recursive --metadata revision=${commitId}`;
         
         exec(command, (error, stdout, stderr) => {
             if (error) {
