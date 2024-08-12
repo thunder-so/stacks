@@ -86,7 +86,7 @@ export class PipelineConstruct extends Construct {
     // Lambda for syncing buckets
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
-    const syncFunctionPath = path.resolve(__dirname, '../functions/sync/');
+    const syncFunctionPath = path.resolve(__dirname, '../functions/');
 
     this.syncBucketsFunction = new Function(this, 'SyncBucketsFunction', {
       runtime: Runtime.NODEJS_20_X,
