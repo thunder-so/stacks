@@ -21,10 +21,9 @@ const appStackProps: StaticSiteProps = {
   },
 
   // Auto deployment
-  // - create a Github personal access token
+  // - create a Github personal access token as plaintext
   // - store in Secrets Manager
-  githubAccessTokenArn: 'arn:aws:secretsmanager:us-east-1:665186350589:secret:GithubPersonalAccessToken-pAwE1v',
-  githubAccessTokenSecret: 'GithubPersonalAccessToken',
+  githubAccessTokenArn: 'arn:aws:secretsmanager:us-east-1:665186350589:secret:githubpat-0abFlT',
 
   // Either provide a buildspec.yml file OR leave empty and fill out buildProps
   // buildSpecFilePath: '',

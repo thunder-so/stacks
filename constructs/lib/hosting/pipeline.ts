@@ -25,7 +25,6 @@ export interface PipelineProps {
     rootdir: string;
   };
   githubAccessTokenArn: string;
-  githubAccessTokenSecret: string;
 
   // build
   buildSpecFilePath?: string;
@@ -92,13 +91,7 @@ export class PipelineConstruct extends Construct {
     this.syncBucketsFunction = new Function(this, 'SyncBucketsFunction', {
       runtime: Runtime.NODEJS_20_X,
       handler: 'sync.handler',
-      code: Code.fromAsset(syncFunctionPath),
-      // environment: {
-      //   PIPELINE_NAME: this.codePipeline.pipelineName,
-      //   OUTPUT_BUCKET: this.buildOutputBucket.bucketName,
-      //   COMMIT_ID: this.commitId,
-      //   HOSTING_BUCKET: props.HostingBucket.bucketName,
-      // },
+      code: Code.fromAsset(syncFunctionPath)
     });
 
     // create pipeline
@@ -110,14 +103,6 @@ export class PipelineConstruct extends Construct {
     this.syncBucketsFunction.addEnvironment('COMMIT_ID', this.commitId);
     this.syncBucketsFunction.addEnvironment('HOSTING_BUCKET', props.HostingBucket.bucketName);
 
-  }
-
-  // Function to get GitHub Access Token from SSM Parameter Store
-  private getGithubAccessToken(id: string): SecretValue {
-    // return SecretValue.ssmSecure(arn);
-    return SecretValue.secretsManager(id);
-    // const secretValue = SecretValue.secretsManager(arn);
-    // return secretValue.unsafeUnwrap();
   }
 
   // Create CodeBuild Project
@@ -279,7 +264,6 @@ export class PipelineConstruct extends Construct {
     );
 
     // Source Step
-    const githubAccessToken = this.getGithubAccessToken(props.githubAccessTokenSecret);
     const sourceOutput = new Artifact();
 
     const sourceAction = new GitHubSourceAction({
@@ -287,10 +271,9 @@ export class PipelineConstruct extends Construct {
       owner: props.sourceProps.owner,
       repo: props.sourceProps.repo,
       branch: props.sourceProps.branchOrRef,
-      // oauthToken: githubAccessToken,
       oauthToken: SecretValue.secretsManager(props.githubAccessTokenArn),
       output: sourceOutput,
-      trigger: GitHubTrigger.POLL
+      trigger: GitHubTrigger.WEBHOOK
     });
     
     pipeline.addStage({
@@ -303,7 +286,7 @@ export class PipelineConstruct extends Construct {
 
     // Build Step
     const buildAction = new CodeBuildAction({
-      actionName: `${props.application}-${props.service}-${props.environment}-buildaction`,
+      actionName: 'BuildAction',
       project: this.codeBuildProject,
       input: sourceOutput,
       runOrder: 2,
@@ -316,7 +299,7 @@ export class PipelineConstruct extends Construct {
 
     // Deploy Step
     const deployAction = new S3DeployAction({
-      actionName: `${props.application}-${props.service}-${props.environment}-deployaction`,
+      actionName: 'DeployAction',
       input: sourceOutput,
       bucket: this.buildOutputBucket,
       objectKey: `${sourceAction.variables.commitId}/`, // store in commit hash directories
@@ -339,10 +322,6 @@ export class PipelineConstruct extends Construct {
         }),
       ],
     });
-
-    // add environment variables to syncBucketsFunction
-    // this.syncBucketsFunction.addEnvironment('PIPELINE_NAME', pipeline.pipelineName);
-    // this.syncBucketsFunction.addEnvironment('PIPELINE_NAME', '');
 
     // return our pipeline
     return pipeline;
