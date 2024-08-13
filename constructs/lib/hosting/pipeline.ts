@@ -4,15 +4,18 @@ import yaml from "yaml";
 import { fileURLToPath } from 'url';
 import { Construct } from "constructs";
 import { Aws, Duration, RemovalPolicy, Stack, SecretValue, CfnParameter } from 'aws-cdk-lib';
-import { PolicyStatement, Effect, ArnPrincipal } from 'aws-cdk-lib/aws-iam';
+import { PolicyStatement, Effect, ArnPrincipal, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { Artifacts, GitHubSourceCredentials, Project, PipelineProject, LinuxBuildImage, LinuxArmBuildImage, ComputeType, Source, BuildSpec } from "aws-cdk-lib/aws-codebuild";
 import { Artifact, Pipeline, PipelineType, StageProps } from 'aws-cdk-lib/aws-codepipeline';
 import { GitHubSourceAction, GitHubTrigger, CodeBuildAction, S3DeployAction, LambdaInvokeAction } from 'aws-cdk-lib/aws-codepipeline-actions';
 import { Function, Runtime, Code } from 'aws-cdk-lib/aws-lambda';
+import { IDistribution } from 'aws-cdk-lib/aws-cloudfront';
 
 export interface PipelineProps {
   HostingBucket: IBucket;
+  Distribution: IDistribution;
+
   application: string;
   service: string;
   environment: string;
@@ -52,6 +55,11 @@ export class PipelineConstruct extends Construct {
   public codePipeline: Pipeline;
 
   /**
+   * Cloudfront Cache Invalidation - CodeBuild Project
+   */
+  public invalidationProject: Project;
+
+  /**
    * The commit reference hash
    */
   public commitId: string;
@@ -82,7 +90,8 @@ export class PipelineConstruct extends Construct {
     });
 
     this.codeBuildProject = this.createBuildProject(props);
-
+    this.setupCacheInvalidation(props);
+  
     // Lambda for syncing buckets
     // const __filename = fileURLToPath(import.meta.url);
     // const __dirname = path.dirname(__filename);
@@ -102,6 +111,52 @@ export class PipelineConstruct extends Construct {
     
   }
 
+
+  /**
+   * Configure a codebuild project to run a shell command 
+   * @param props 
+   * 
+   */
+  private setupCacheInvalidation(props: PipelineProps) {
+    const cloudfrontInvalidationRole = new Role(this, 'CloudfrontInvalidationRole', {
+      assumedBy: new ServicePrincipal('codebuild.amazonaws.com'),
+    });
+    
+    cloudfrontInvalidationRole.addToPolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['cloudfront:CreateInvalidation'],
+      resources: [`arn:aws:cloudfront::${props.Distribution.stack.account}:distribution/${props.Distribution.distributionId}`],
+    }));
+
+    const buildSpec = BuildSpec.fromObject({
+      version: '0.2',
+      phases: {
+        build: {
+          commands: [
+            'aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"'
+          ],
+        },
+      },
+    });
+    
+   this.invalidationProject = new Project(this, 'CloudfrontInvalidationProject', {
+      projectName: `${props.application}-${props.service}-${props.environment}-CacheInvalidation`,
+      buildSpec: buildSpec,
+      environment: {
+        buildImage: LinuxBuildImage.STANDARD_5_0,
+        computeType: ComputeType.SMALL,
+      },
+      role: cloudfrontInvalidationRole,
+      environmentVariables: {
+        CLOUDFRONT_DISTRIBUTION_ID: { value: props.Distribution.distributionId },
+      },
+    });
+  }
+
+  /**
+   * Configure Lambda function for syncing buckets
+   * @param props 
+   */
   private setupSyncBucketsFunction(props: PipelineProps) {
     // this.syncBucketsFunction.addEnvironment('PIPELINE_NAME', this.codePipeline.pipelineName);
     this.syncBucketsFunction.addEnvironment('OUTPUT_BUCKET', this.buildOutputBucket.bucketName);
@@ -142,8 +197,11 @@ export class PipelineConstruct extends Construct {
     }));
   }
   
-
-  // Create CodeBuild Project
+  /**
+   * Create CodeBuild Project
+   * @param props 
+   * @returns project
+   */
   private createBuildProject(props: PipelineProps): Project {
     const bucketNamePrefix = `${props.application}-${props.service}-${props.environment}`;
 
@@ -250,7 +308,11 @@ export class PipelineConstruct extends Construct {
     return project;
   }
 
-  // Create pipeline
+  /**
+   * Create the CodePipeline
+   * @param props 
+   * @returns pipeline
+   */
   private createPipeline(props: PipelineProps): Pipeline {
     const bucketNamePrefix = `${props.application}-${props.service}-${props.environment}`;
 
@@ -356,6 +418,7 @@ export class PipelineConstruct extends Construct {
     //   runOrder: 3,
     // });
 
+    // Deploy directly to Hosting Bucket
     const deployAction = new S3DeployAction({
       actionName: 'DeployAction',
       input: buildOutput,
@@ -368,6 +431,18 @@ export class PipelineConstruct extends Construct {
       actions: [deployAction],
     });
 
+    // Cache invalidation step
+    const invalidateAction = new CodeBuildAction({
+      actionName: 'InvalidateAction',
+      project: this.invalidationProject,
+      input: buildOutput,
+      runOrder: 4,
+    });
+
+    pipeline.addStage({
+      stageName: 'InvalidateCache',
+      actions: [invalidateAction]
+    })
 
     // Sync step
     // pipeline.addStage({

@@ -35,6 +35,7 @@ export class StaticSiteStack extends Stack {
 
     const pipeline = new PipelineConstruct(this, 'Pipeline', {
       HostingBucket: hosting.hostingBucket,
+      Distribution: hosting.distribution,
       application: props.application,
       environment: props.environment,
       service: props.service,
