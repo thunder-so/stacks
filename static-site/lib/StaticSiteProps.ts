@@ -80,7 +80,7 @@ export interface StaticSiteProps extends StackProps {
     /**
      * Optional. Whether to provision Athena for CloudFront access logs analysis.
      */
-    readonly enableAccessLogAnalysis?: boolean;
+    readonly enableAnalytics?: boolean;
   
     /**
      * Optional. Whether to provision Lambda and EventBridge rule to cleanup stale static assets.

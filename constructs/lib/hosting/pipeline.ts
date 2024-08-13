@@ -29,7 +29,7 @@ export interface PipelineProps {
   // build
   buildSpecFilePath?: string;
   buildProps?: {
-    runtime: string;
+    runtime: number;
     installcmd: string;
     buildcmd: string;
     outputDir: string;
@@ -145,6 +145,29 @@ export class PipelineConstruct extends Construct {
     if (props.buildSpecFilePath) {
       const buildSpecFile = fs.readFileSync(props.buildSpecFilePath, "utf8");
       buildSpecYaml = yaml.parse(buildSpecFile);  
+    } else {
+      buildSpecYaml = BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+            install: {
+                'runtime-versions': {
+                    nodejs: props.buildProps?.runtime || '20'
+                },
+                commands: [ 
+                  `cd ${props.sourceProps?.rootdir || '.'}`,
+                  // 'aws cloudfront create-invalidation --distribution-id ${CLOUDFRONT_ID} --paths "/*"',
+                  props.buildProps?.installcmd || 'npm install'
+                ]
+            },
+            build: {
+                commands: [ props.buildProps?.buildcmd || 'npm run build'],
+            },
+        },
+        artifacts: {
+            files: ['**/*'],
+            'base-directory': `${props.sourceProps.rootdir}${props.buildProps?.outputDir}/` 
+        }
+      })
     }
 
     // Set the github source credentials
@@ -155,55 +178,32 @@ export class PipelineConstruct extends Construct {
     // create the cloudbuild project
     const project = new Project(this, "CodeBuildProject", {
       projectName: `${props.application}-${props.service}-${props.environment}-buildproject`,
-      buildSpec: 
-        buildSpecYaml 
-          ? BuildSpec.fromObject(buildSpecYaml) 
-          : BuildSpec.fromObject({
-            version: '0.2',
-            phases: {
-                install: {
-                    'runtime-versions': {
-                        nodejs: props.buildProps?.runtime || '20'
-                    },
-                    commands: [ 
-                      `cd ${props.sourceProps?.rootdir || '.'}`,
-                      // 'aws cloudfront create-invalidation --distribution-id ${CLOUDFRONT_ID} --paths "/*"',
-                      props.buildProps?.installcmd || 'npm ci'
-                    ]
-                },
-                build: {
-                    commands: [ props.buildProps?.buildcmd || 'npm run build'],
-                },
-            },
-            artifacts: {
-                files: ['**/*'],
-                'base-directory': props.buildProps?.outputDir || '.'
-            }
-        }),
-        source: Source.gitHub({
-            cloneDepth: 1,
-            owner: props.sourceProps.owner,
-            repo: props.sourceProps.repo,
-            branchOrRef: props.sourceProps.branchOrRef,
-            // webhook: true
-        }),
-        // artifacts: Artifacts.s3({
-        //     bucket: this.buildOutputBucket,
-        //     encryption: undefined, // Encryption disabled
-        // }),
-        environment: {
-            // buildImage: LinuxBuildImage.STANDARD_7_0,
-            // computeType: ComputeType.MEDIUM,
-            buildImage: LinuxArmBuildImage.AMAZON_LINUX_2_STANDARD_3_0,
-            computeType: ComputeType.SMALL,
-            privileged: true,
-        },
-        // environmentVariables: codeBuildEnvVars,
-        logging: {
-          s3: {
-            bucket: buildLogsBucket,
-          }
+      buildSpec: buildSpecYaml,
+        
+      source: Source.gitHub({
+        cloneDepth: 1,
+        owner: props.sourceProps.owner,
+        repo: props.sourceProps.repo,
+        branchOrRef: props.sourceProps.branchOrRef,
+        // webhook: true
+      }),
+      // artifacts: Artifacts.s3({
+      //     bucket: this.buildOutputBucket,
+      //     encryption: undefined, // Encryption disabled
+      // }),
+      environment: {
+        buildImage: LinuxBuildImage.STANDARD_7_0,
+        computeType: ComputeType.MEDIUM,
+        // buildImage: LinuxArmBuildImage.AMAZON_LINUX_2_STANDARD_3_0,
+        // computeType: ComputeType.MEDIUM,
+        privileged: true,
+      },
+      // environmentVariables: codeBuildEnvVars,
+      logging: {
+        s3: {
+          bucket: buildLogsBucket,
         }
+      }
     });
 
     // allow project to get secrets
