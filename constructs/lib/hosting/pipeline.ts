@@ -97,12 +97,30 @@ export class PipelineConstruct extends Construct {
     // create pipeline
     this.codePipeline = this.createPipeline(props);
 
-    // add environment variables to syncBucketsFunction
-    // this.syncBucketsFunction.addEnvironment('PIPELINE_NAME', this.codePipeline.pipelineName); // Circular dependency between resources
+    // Call the setup function to add environment variables and permissions   
+    this.setupSyncBucketsFunction(props);
+    
+  }
+
+  private setupSyncBucketsFunction(props: PipelineProps) {
+    // this.syncBucketsFunction.addEnvironment('PIPELINE_NAME', this.codePipeline.pipelineName);
     this.syncBucketsFunction.addEnvironment('OUTPUT_BUCKET', this.buildOutputBucket.bucketName);
     this.syncBucketsFunction.addEnvironment('COMMIT_ID', this.commitId);
     this.syncBucketsFunction.addEnvironment('HOSTING_BUCKET', props.HostingBucket.bucketName);
-
+  
+    // grant lambda permission to talk to pipeline
+    this.syncBucketsFunction.addToRolePolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: [
+        "codepipeline:PutJobSuccessResult",
+        "codepipeline:PutJobFailureResult"
+      ],
+      resources: [
+        "*",
+        // this.codePipeline.pipelineArn
+      ],
+    }));
+  
     // Grant permissions to read from the build output bucket
     this.syncBucketsFunction.addToRolePolicy(new PolicyStatement({
       effect: Effect.ALLOW,
@@ -112,7 +130,7 @@ export class PipelineConstruct extends Construct {
         `${this.buildOutputBucket.bucketArn}/*`
       ],
     }));
-
+  
     // Grant permissions to write to the hosting bucket
     this.syncBucketsFunction.addToRolePolicy(new PolicyStatement({
       effect: Effect.ALLOW,
@@ -122,8 +140,8 @@ export class PipelineConstruct extends Construct {
         `${props.HostingBucket.bucketArn}/*`
       ],
     }));
-    
   }
+  
 
   // Create CodeBuild Project
   private createBuildProject(props: PipelineProps): Project {
@@ -165,7 +183,7 @@ export class PipelineConstruct extends Construct {
         },
         artifacts: {
             files: ['**/*'],
-            'base-directory': `${props.sourceProps.rootdir}${props.buildProps?.outputDir}/` 
+            'base-directory': `${props.sourceProps.rootdir}${props.buildProps?.outputDir}` 
         }
       })
     }
@@ -238,7 +256,7 @@ export class PipelineConstruct extends Construct {
 
     // build artifact bucket
     const artifactBucket = new Bucket(this, "ArtifactBucket", {
-      bucketName: `${bucketNamePrefix}-artifacts-logs`,
+      bucketName: `${bucketNamePrefix}-artifacts`,
       encryption: BucketEncryption.S3_MANAGED,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       enforceSSL: true,
@@ -341,7 +359,7 @@ export class PipelineConstruct extends Construct {
           actionName: 'SyncBucketsAction',
           inputs: [buildOutput],
           lambda: this.syncBucketsFunction,
-          runOrder: 4,
+          runOrder: 4
         }),
       ],
     });
