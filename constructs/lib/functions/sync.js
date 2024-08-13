@@ -20,18 +20,33 @@ exports.handler = async (event, context) => {
 };
 
 async function syncS3Buckets(outputBucket, commitId, hostingBucket) {
-    return new Promise((resolve, reject) => {
-        const command = `${path}aws s3 cp s3://${outputBucket}/${commitId}/ s3://${hostingBucket}/ --recursive --metadata revision=${commitId}`;
-        
+    const command = `${path}aws s3 cp s3://${outputBucket}/${commitId}/ s3://${hostingBucket}/ --recursive --metadata revision=${commitId}`;
+
+    // return new Promise((resolve, reject) => {        
+    //     exec(command, (error, stdout, stderr) => {
+    //         if (error) {
+    //             reject(`Error: ${stderr}`);
+    //             return;
+    //         }
+    //         console.log(`Output: ${stdout}`);
+    //         // resolve(stdout);
+    //     });
+
+    //     resolve();
+    // });
+
+    try {
         exec(command, (error, stdout, stderr) => {
-            if (error) {
-                reject(`Error: ${stderr}`);
-                return;
+            if(error) {
+                new Error(error, stderr)
             }
-            console.log(`Output: ${stdout}`);
-            resolve(stdout);
-        });
-    });
+
+            console.log("Output", stdout)
+        })
+    } catch(err) {
+        console.log(`Error syncing buckets ${pipelineName}: ${err}`);
+        throw err;
+    }
 };
 
 // async function startPipeline(pipelineName) {

@@ -103,6 +103,26 @@ export class PipelineConstruct extends Construct {
     this.syncBucketsFunction.addEnvironment('COMMIT_ID', this.commitId);
     this.syncBucketsFunction.addEnvironment('HOSTING_BUCKET', props.HostingBucket.bucketName);
 
+    // Grant permissions to read from the build output bucket
+    this.syncBucketsFunction.addToRolePolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['s3:GetObject', 's3:ListBucket'],
+      resources: [
+        this.buildOutputBucket.bucketArn,
+        `${this.buildOutputBucket.bucketArn}/*`
+      ],
+    }));
+
+    // Grant permissions to write to the hosting bucket
+    this.syncBucketsFunction.addToRolePolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['s3:PutObject'],
+      resources: [
+        props.HostingBucket.bucketArn,
+        `${props.HostingBucket.bucketArn}/*`
+      ],
+    }));
+    
   }
 
   // Create CodeBuild Project
@@ -143,21 +163,21 @@ export class PipelineConstruct extends Construct {
             phases: {
                 install: {
                     'runtime-versions': {
-                        nodejs: props.buildProps?.runtime
+                        nodejs: props.buildProps?.runtime || '20'
                     },
                     commands: [ 
-                      `cd ${props.sourceProps?.rootdir}`,
+                      `cd ${props.sourceProps?.rootdir || '.'}`,
                       // 'aws cloudfront create-invalidation --distribution-id ${CLOUDFRONT_ID} --paths "/*"',
-                      props.buildProps?.installcmd 
+                      props.buildProps?.installcmd || 'npm ci'
                     ]
                 },
                 build: {
-                    commands: [ props.buildProps?.buildcmd ],
+                    commands: [ props.buildProps?.buildcmd || 'npm run build'],
                 },
             },
             artifacts: {
                 files: ['**/*'],
-                // 'base-directory': props.sourceProps?.rootdir
+                'base-directory': props.buildProps?.outputDir || '.'
             }
         }),
         source: Source.gitHub({
@@ -319,6 +339,7 @@ export class PipelineConstruct extends Construct {
       actions: [
         new LambdaInvokeAction({
           actionName: 'SyncBucketsAction',
+          inputs: [buildOutput],
           lambda: this.syncBucketsFunction,
           runOrder: 4,
         }),
