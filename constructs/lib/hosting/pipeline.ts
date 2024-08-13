@@ -4,10 +4,10 @@ import yaml from "yaml";
 import { fileURLToPath } from 'url';
 import { Construct } from "constructs";
 import { Aws, Duration, RemovalPolicy, Stack, SecretValue, CfnParameter } from 'aws-cdk-lib';
+import { PolicyStatement, Effect, ArnPrincipal } from 'aws-cdk-lib/aws-iam';
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { Artifacts, GitHubSourceCredentials, Project, PipelineProject, LinuxBuildImage, LinuxArmBuildImage, ComputeType, Source, BuildSpec } from "aws-cdk-lib/aws-codebuild";
 import { Artifact, Pipeline, PipelineType, StageProps } from 'aws-cdk-lib/aws-codepipeline';
-import { PolicyStatement, Effect, ArnPrincipal } from 'aws-cdk-lib/aws-iam';
 import { GitHubSourceAction, GitHubTrigger, CodeBuildAction, S3DeployAction, LambdaInvokeAction } from 'aws-cdk-lib/aws-codepipeline-actions';
 import { Function, Runtime, Code } from 'aws-cdk-lib/aws-lambda';
 
@@ -84,21 +84,21 @@ export class PipelineConstruct extends Construct {
     this.codeBuildProject = this.createBuildProject(props);
 
     // Lambda for syncing buckets
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const syncFunctionPath = path.resolve(__dirname, '../functions/');
+    // const __filename = fileURLToPath(import.meta.url);
+    // const __dirname = path.dirname(__filename);
+    // const syncFunctionPath = path.resolve(__dirname, '../functions/');
 
-    this.syncBucketsFunction = new Function(this, 'SyncBucketsFunction', {
-      runtime: Runtime.NODEJS_20_X,
-      handler: 'sync.handler',
-      code: Code.fromAsset(syncFunctionPath)
-    });
+    // this.syncBucketsFunction = new Function(this, 'SyncBucketsFunction', {
+    //   runtime: Runtime.NODEJS_20_X,
+    //   handler: 'sync.handler',
+    //   code: Code.fromAsset(syncFunctionPath)
+    // });
 
     // create pipeline
     this.codePipeline = this.createPipeline(props);
 
     // Call the setup function to add environment variables and permissions   
-    this.setupSyncBucketsFunction(props);
+    // this.setupSyncBucketsFunction(props);
     
   }
 
@@ -233,7 +233,7 @@ export class PipelineConstruct extends Construct {
       })
     );
 
-    // Add permission for the project to write files in bucket
+    // Grant project permission to write files in output bucket
     this.buildOutputBucket.addToResourcePolicy(
       new PolicyStatement({
         effect: Effect.ALLOW,
@@ -244,8 +244,8 @@ export class PipelineConstruct extends Construct {
       })
     );
 
-    // ??
-    this.buildOutputBucket.grantReadWrite(project.grantPrincipal);
+    // Grant project read/write permissions on hosting bucket
+    props.HostingBucket.grantReadWrite(project.grantPrincipal);
 
     return project;
   }
@@ -301,6 +301,16 @@ export class PipelineConstruct extends Construct {
       })
     );
 
+    // Allow pipeline to write to the hosting bucket
+    props.HostingBucket.addToResourcePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ["s3:PutObject"],
+        resources: [`${props.HostingBucket.bucketArn}/*`],
+        principals: [new ArnPrincipal(pipeline.role.roleArn)],
+      })
+    );
+
     // Source Step
     const sourceOutput = new Artifact();
     const buildOutput = new Artifact();
@@ -338,11 +348,18 @@ export class PipelineConstruct extends Construct {
     });
 
     // Deploy Step
+    // const deployAction = new S3DeployAction({
+    //   actionName: 'DeployAction',
+    //   input: buildOutput,
+    //   bucket: this.buildOutputBucket,
+    //   objectKey: `${sourceAction.variables.commitId}`, // store in commit hash directories
+    //   runOrder: 3,
+    // });
+
     const deployAction = new S3DeployAction({
       actionName: 'DeployAction',
       input: buildOutput,
-      bucket: this.buildOutputBucket,
-      objectKey: `${sourceAction.variables.commitId}`, // store in commit hash directories
+      bucket: props.HostingBucket,
       runOrder: 3,
     });
 
@@ -351,18 +368,19 @@ export class PipelineConstruct extends Construct {
       actions: [deployAction],
     });
 
+
     // Sync step
-    pipeline.addStage({
-      stageName: 'Sync',
-      actions: [
-        new LambdaInvokeAction({
-          actionName: 'SyncBucketsAction',
-          inputs: [buildOutput],
-          lambda: this.syncBucketsFunction,
-          runOrder: 4
-        }),
-      ],
-    });
+    // pipeline.addStage({
+    //   stageName: 'Sync',
+    //   actions: [
+    //     new LambdaInvokeAction({
+    //       actionName: 'SyncBucketsAction',
+    //       inputs: [buildOutput],
+    //       lambda: this.syncBucketsFunction,
+    //       runOrder: 4
+    //     }),
+    //   ],
+    // });
 
     // return our pipeline
     return pipeline;
