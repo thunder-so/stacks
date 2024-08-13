@@ -15,17 +15,17 @@ export class StaticSiteStack extends Stack {
       throw new Error('Mandatory stack properties missing.');
     }
 
-    // Set up the AppConfig application
-    const application = new ApplicationConstruct(this, 'Application', {
-      applicationName: props.application,
-    });
+    // // Set up the AppConfig application
+    // const application = new ApplicationConstruct(this, 'Application', {
+    //   applicationName: props.application,
+    // });
     
-    // Set up the AppConfig environment and configuration profile
-    const environment = new EnvironmentConstruct(this, 'Environment', {
-      applicationConstruct: application,
-      applicationName: props.application,
-      environmentName: props.environment,
-    });
+    // // Set up the AppConfig environment and configuration profile
+    // const environment = new EnvironmentConstruct(this, 'Environment', {
+    //   applicationConstruct: application,
+    //   applicationName: props.application,
+    //   environmentName: props.environment,
+    // });
 
     const hosting = new HostingConstruct(this, 'Hosting', {
       application: props.application,
@@ -50,7 +50,7 @@ export class StaticSiteStack extends Stack {
         runtime: props.buildProps?.runtime as number,
         installcmd: props.buildProps?.installcmd as string,
         buildcmd: props.buildProps?.buildcmd as string,
-        outputdir: props.buildProps?.outputDir as string,
+        outputdir: props.buildProps?.outputdir as string,
       }
     });
 

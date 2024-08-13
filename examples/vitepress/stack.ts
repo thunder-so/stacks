@@ -9,15 +9,15 @@ const appStackProps: StaticSiteProps = {
     region: 'us-east-1'
   },
   application: 'examples',
-  service: 'vuejs',
-  environment: 'dev',
+  service: 'vitepress',
+  environment: 'test',
 
   // Your Github repository url contains https://github.com/<owner>/<repo>
   sourceProps: {
     owner: 'thunder-so',
     repo: 'stacks',
     branchOrRef: 'main',
-    rootdir: 'examples/vuejs/'
+    rootdir: 'examples/vitepress/'
   },
 
   // Auto deployment
@@ -28,10 +28,10 @@ const appStackProps: StaticSiteProps = {
   // Either provide a buildspec.yml file OR leave empty and fill out buildProps
   // buildSpecFilePath: '',
   buildProps: {
-    runtime: 20, // nodejs version
-    installcmd: "npm ci",
-    buildcmd: "npm run build",
-    outputdir: "dist/"
+    runtime: 18, // nodejs version
+    installcmd: "npx pnpm i --store=node_modules/.pnpm-store",
+    buildcmd: "pnpm run build",
+    outputdir: "docs/.vitepress/dist/"
   }
 };
 

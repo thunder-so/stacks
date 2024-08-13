@@ -273,7 +273,7 @@ export class HostingConstruct extends Construct {
             : {}),
         }
 
-        this.distribution = new Distribution(this, distributionName, distributionProps);
+        // this.distribution = new Distribution(this, distributionName, distributionProps);
 
         // Define the CloudFront distribution using `createCloudFrontDistributionForS3`
         const cloudFrontDistributionProps: CreateCloudFrontDistributionForS3Props = {

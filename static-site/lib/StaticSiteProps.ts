@@ -54,7 +54,7 @@ export interface StaticSiteProps extends StackProps {
       runtime: number;
       installcmd: string;
       buildcmd: string;
-      outputDir: string;
+      outputdir: string;
     };
    
     /**

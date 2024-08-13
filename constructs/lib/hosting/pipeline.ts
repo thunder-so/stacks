@@ -249,9 +249,9 @@ export class PipelineConstruct extends Construct {
     }
 
     // Set the github source credentials
-    new GitHubSourceCredentials(this, 'code-build-credentials', {
-      accessToken: SecretValue.secretsManager(props.githubAccessTokenArn)
-    })
+    // new GitHubSourceCredentials(this, `${props.application}-${props.service}-${props.environment}-credentials`, {
+    //   accessToken: SecretValue.secretsManager(props.githubAccessTokenArn)
+    // })
 
     // create the cloudbuild project
     const project = new Project(this, "CodeBuildProject", {
