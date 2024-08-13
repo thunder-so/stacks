@@ -35,7 +35,7 @@ export interface PipelineProps {
     runtime: number;
     installcmd: string;
     buildcmd: string;
-    outputDir: string;
+    outputdir: string;
   };
 
   // edge function
@@ -90,7 +90,7 @@ export class PipelineConstruct extends Construct {
     });
 
     this.codeBuildProject = this.createBuildProject(props);
-    this.setupCacheInvalidation(props);
+    this.invalidationProject = this.setupCacheInvalidation(props);
   
     // Lambda for syncing buckets
     // const __filename = fileURLToPath(import.meta.url);
@@ -117,7 +117,7 @@ export class PipelineConstruct extends Construct {
    * @param props 
    * 
    */
-  private setupCacheInvalidation(props: PipelineProps) {
+  private setupCacheInvalidation(props: PipelineProps): Project {
     const cloudfrontInvalidationRole = new Role(this, 'CloudfrontInvalidationRole', {
       assumedBy: new ServicePrincipal('codebuild.amazonaws.com'),
     });
@@ -139,7 +139,7 @@ export class PipelineConstruct extends Construct {
       },
     });
     
-   this.invalidationProject = new Project(this, 'CloudfrontInvalidationProject', {
+   const project = new Project(this, 'CloudfrontInvalidationProject', {
       projectName: `${props.application}-${props.service}-${props.environment}-CacheInvalidation`,
       buildSpec: buildSpec,
       environment: {
@@ -151,6 +151,8 @@ export class PipelineConstruct extends Construct {
         CLOUDFRONT_DISTRIBUTION_ID: { value: props.Distribution.distributionId },
       },
     });
+
+    return project;
   }
 
   /**
@@ -241,7 +243,7 @@ export class PipelineConstruct extends Construct {
         },
         artifacts: {
             files: ['**/*'],
-            'base-directory': `${props.sourceProps.rootdir}${props.buildProps?.outputDir}` 
+            'base-directory': `${props.sourceProps.rootdir}${props.buildProps?.outputdir}` 
         }
       })
     }

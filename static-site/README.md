@@ -151,6 +151,7 @@ The `StaticSiteStack` construct can be configured via the following props:
           <li><code>owner: string;</code></li>
           <li><code>repo: string;</code></li>
           <li><code>branchOrRef: string;</code></li>
+          <li><code>rootdir: string;</code></li>
         <ul>
       </td>
     </tr>
@@ -189,7 +190,7 @@ The `StaticSiteStack` construct can be configured via the following props:
           <li><code>runtime: string;</code></li>
           <li><code>installcmd: string;</code></li>
           <li><code>buildcmd: string;</code></li>
-          <li><code>outputDir: string;</code></li>
+          <li><code>outputdir: string;</code></li>
         <ul>
       </td>
     </tr>
@@ -373,7 +374,7 @@ const appStackProps: StaticSiteProps = {
 
   // Auto deployment
   // - create a Github personal access token
-  // - store in Secrets Manager
+  // - store in Secrets Manager as plaintext
   githubAccessTokenArn: 'arn:aws:secretsmanager:us-east-1:123456789012:secret/github-token',
 
   // Either provide a buildspec.yml file OR leave empty and fill out buildProps

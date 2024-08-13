@@ -50,7 +50,7 @@ export class StaticSiteStack extends Stack {
         runtime: props.buildProps?.runtime as number,
         installcmd: props.buildProps?.installcmd as string,
         buildcmd: props.buildProps?.buildcmd as string,
-        outputDir: props.buildProps?.outputDir as string,
+        outputdir: props.buildProps?.outputDir as string,
       }
     });
 
