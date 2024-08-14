@@ -56,6 +56,11 @@ export interface StaticSiteProps extends StackProps {
       buildcmd: string;
       outputdir: string;
     };
+
+    /**
+     * Optional. If you have a custom CloudFront Functions file for your app, provide the relative path to the file.
+     */
+    readonly edgeFunctionFilePath?: string;
    
     /**
      * Optional. The domain (without the protocol) at which the app shall be publicly available.
@@ -71,12 +76,7 @@ export interface StaticSiteProps extends StackProps {
      * Optional. The ID of the hosted zone to create a DNS record for the specified domain.
      */
     readonly hostedZoneId?: string;
-  
-    /**
-     * Optional. If you have a custom CloudFront Functions file for your app, provide the relative path to the file.
-     */
-    readonly cfFunctionFilePath?: string;
-    
+      
     /**
      * Optional. Whether to provision Athena for CloudFront access logs analysis.
      */

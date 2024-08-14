@@ -31,6 +31,7 @@ export class StaticSiteStack extends Stack {
       application: props.application,
       environment: props.environment,
       service: props.service,
+      edgeFunctionFilePath: props.edgeFunctionFilePath as string
     });
 
     const pipeline = new PipelineConstruct(this, 'Pipeline', {

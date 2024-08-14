@@ -1,13 +1,15 @@
+import fs from 'fs';
 import { Aws, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { Construct } from "constructs";
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { PolicyStatement, Effect, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { HttpOrigin, S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
-import { CfnDistribution, Distribution, type IDistribution, CachePolicy, SecurityPolicyProtocol, HttpVersion, PriceClass, ResponseHeadersPolicy, HeadersFrameOption, HeadersReferrerPolicy, BehaviorOptions, AllowedMethods, ViewerProtocolPolicy, CacheCookieBehavior, CacheHeaderBehavior, CacheQueryStringBehavior, CfnOriginAccessControl } from "aws-cdk-lib/aws-cloudfront";
+import { CfnDistribution, Distribution, type IDistribution, CachePolicy, SecurityPolicyProtocol, HttpVersion, PriceClass, ResponseHeadersPolicy, HeadersFrameOption, HeadersReferrerPolicy, BehaviorOptions, AllowedMethods, ViewerProtocolPolicy, CacheCookieBehavior, CacheHeaderBehavior, CacheQueryStringBehavior, CfnOriginAccessControl, Function as CloudFrontFunction, FunctionCode as CloudFrontFunctionCode, FunctionEventType } from "aws-cdk-lib/aws-cloudfront";
 import { AaaaRecord, ARecord, HostedZone, type IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { CloudFrontTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 import { createCloudFrontDistributionForS3, CreateCloudFrontDistributionForS3Props, CreateCloudFrontDistributionForS3Response } from '@aws-solutions-constructs/core'
+
 
 export interface HostingProps {
     application: string;
@@ -41,23 +43,45 @@ export class HostingConstruct extends Construct {
      * The CloudFront distribution origin that routes to S3 HTTP server.
      */
     private s3Origin: S3Origin;
+
+    /**
+     * The CloudFront Edge Function
+     */
+    private cloudFrontFunction: CloudFrontFunction
     
 
     constructor(scope: Construct, id: string, props: HostingProps) {
-        super(scope, id)
+      super(scope, id)
 
-        // this.kv = this.createKV(props);
-        this.createHostingBucket(props);
-        this.createCloudfrontDistribution(props);
+      // this.kv = this.createKV(props);
+      this.createHostingBucket(props);
 
-        if(props.domain) {
-            this.createDnsRecords(props);
-        }
+      console.log('props.edgeFunctionFilePath:', props.edgeFunctionFilePath);
 
-        if (props.enableAnalytics) {
+      if (props.edgeFunctionFilePath) {
+        this.cloudFrontFunction = this.createCloudFrontFunction(props);
+      }
+      
+      this.createCloudfrontDistribution(props);
 
-        }
+      if(props.domain) {
+        this.createDnsRecords(props);
+      }
 
+      if (props.enableAnalytics) {
+
+      }
+    }
+
+    private createCloudFrontFunction(props: HostingProps): CloudFrontFunction {
+      const cloudFrontFunctionCode = fs.readFileSync(props.edgeFunctionFilePath as string, "utf8");
+
+      const cloudFrontFunction = new CloudFrontFunction(this, 'CloudFrontFunction', {
+        code: CloudFrontFunctionCode.fromInline(cloudFrontFunctionCode),
+        comment: `CloudFront Function: ${props.edgeFunctionFilePath}`,
+      });
+
+      return cloudFrontFunction;
     }
 
     /**
@@ -185,7 +209,7 @@ export class HostingConstruct extends Construct {
             },
             removeHeaders: ['age' , 'date'],
       });
-
+      
       // defaultBehavior
       const defaultBehavior: BehaviorOptions = {
           origin: this.s3Origin,
@@ -193,12 +217,12 @@ export class HostingConstruct extends Construct {
           cachePolicy: defaultCachePolicy,
           allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
           viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-          // functionAssociations: [
-          //   {
-          //     function: params.changeUri,
-          //     eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
-          //   },
-          // ],
+          ...(this.cloudFrontFunction ? {
+            functionAssociations: [{
+                eventType: FunctionEventType.VIEWER_REQUEST,
+                function: this.cloudFrontFunction
+            }]
+          } : {})
       };
 
       // imgBehaviour
@@ -207,13 +231,7 @@ export class HostingConstruct extends Construct {
         responseHeadersPolicy: responseHeadersPolicy,
         cachePolicy: imgCachePolicy,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
-        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        // functionAssociations: [
-        //   {
-        //     function: params.changeUri,
-        //     eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
-        //   },
-        // ],
+        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS
       };
 
       // staticAssetsBehaviour
@@ -223,13 +241,7 @@ export class HostingConstruct extends Construct {
         responseHeadersPolicy: responseHeadersPolicy,
         cachePolicy: staticAssetsCachePolicy,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
-        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        // functionAssociations: [
-        //   {
-        //     function: params.changeUri,
-        //     eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
-        //   },
-        // ],
+        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS
       };
 
       // const oac = new CfnOriginAccessControl(this, "OAC", {
@@ -295,9 +307,9 @@ export class HostingConstruct extends Construct {
         this.hostingBucket.addToResourcePolicy(
           new PolicyStatement({
             effect: Effect.ALLOW,
-            actions: ['s3:GetObject'],
+            actions: ['s3:GetObject'], // 's3:ListBucket' slows down deployment
             principals: [new ServicePrincipal('cloudfront.amazonaws.com')],
-            resources: [this.hostingBucket.arnForObjects('*')],
+            resources: [`${this.hostingBucket.bucketArn}/*`],
             conditions: {
               StringEquals: {
                 'AWS:SourceArn': `arn:aws:cloudfront::${Aws.ACCOUNT_ID}:distribution/${this.distribution.distributionId}`

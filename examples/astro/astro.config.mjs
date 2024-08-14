@@ -9,7 +9,7 @@ export default defineConfig({
 	integrations: [mdx(), sitemap()],
 	vite: {
 		build: {
-			exclude: ['./stack.ts']
+			exclude: ['stack/*']
 		}
 	}
 });

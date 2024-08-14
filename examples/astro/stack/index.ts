@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { App } from "aws-cdk-lib";
-import { StaticSiteStack, type StaticSiteProps } from "../../../stacks/static-site";
+import { StaticSiteStack, type StaticSiteProps } from "../../../../stacks/static-site";
 // import { StaticSiteStack, type StaticSiteProps } from "@thunderso/stacks/static-site";
 
 const appStackProps: StaticSiteProps = {
@@ -29,10 +29,14 @@ const appStackProps: StaticSiteProps = {
   // buildSpecFilePath: '',
   buildProps: {
     runtime: 18, // nodejs version
-    installcmd: "npm i",
-    buildcmd: "npx astro check && npx astro build",
+    installcmd: "npm ci",
+    buildcmd: "npx astro build",
     outputdir: "dist/"
-  }
+  },
+
+  // Custom CloudFront Functions for URL rewrite
+  edgeFunctionFilePath: './stack/urlrewrite.js'
+
 };
 
-new StaticSiteStack(new App(), `${appStackProps.application}-${appStackProps.environment}-${appStackProps.service}-stack`, appStackProps);
+new StaticSiteStack(new App(), `${appStackProps.application}-${appStackProps.service}-${appStackProps.environment}-stack`, appStackProps);
