@@ -56,8 +56,6 @@ export class HostingConstruct extends Construct {
       // this.kv = this.createKV(props);
       this.createHostingBucket(props);
 
-      console.log('props.edgeFunctionFilePath:', props.edgeFunctionFilePath);
-
       if (props.edgeFunctionFilePath) {
         this.cloudFrontFunction = this.createCloudFrontFunction(props);
       }

@@ -73,7 +73,7 @@ This is required to provide the app via HTTPS on the public internet. Take note 
 
 2. [CloudFront Functions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/CloudFront-functions.html) are used for URL rewriting.
 
-> Check out the resources from [CloudFront-hosting-toolkit](https://github.com/awslabs/CloudFront-hosting-toolkit/tree/main/resources) for Angular, React, Vue, Nextjs specific buildspecs and CloudFront Functions.
+> Check out the resources from [aws-samples/amazon-cloudfront-functions](https://github.com/aws-samples/amazon-cloudfront-functions) for examples.
 
 ## Configuration
 

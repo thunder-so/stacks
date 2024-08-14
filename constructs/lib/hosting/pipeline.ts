@@ -37,9 +37,6 @@ export interface PipelineProps {
     buildcmd: string;
     outputdir: string;
   };
-
-  // edge function
-  edgeFunctionFilePath?: string;
 }
 
 export class PipelineConstruct extends Construct {
@@ -72,7 +69,7 @@ export class PipelineConstruct extends Construct {
   /**
    * The Lambda function for sync.js
    */
-  public syncBucketsFunction: Function;
+  // public syncBucketsFunction: Function;
 
 
   constructor(scope: Construct, id: string, props: PipelineProps) {
@@ -248,11 +245,7 @@ export class PipelineConstruct extends Construct {
       })
     }
 
-    // Set the github source credentials
-    // new GitHubSourceCredentials(this, `${props.application}-${props.service}-${props.environment}-credentials`, {
-    //   accessToken: SecretValue.secretsManager(props.githubAccessTokenArn)
-    // })
-
+    
     // create the cloudbuild project
     const project = new Project(this, "CodeBuildProject", {
       projectName: `${props.application}-${props.service}-${props.environment}-buildproject`,
