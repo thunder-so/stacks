@@ -164,7 +164,7 @@ The `StaticSiteStack` construct can be configured via the following props:
       </th>
       <td>
         <!-- <strong>Required</strong>. Create a Github Personal Access Token, save the token as a parameter in AWS Parameter Store. Provide the ARN. Ensure it is <code>SecureString</code>. -->
-        <strong>Required</strong>. Create a Github Personal Access Token, save the token as a secret in AWS Secrets Manager. Provide the ARN. Ensure it is <code>SecureString</code>.
+        <strong>Required</strong>. Create a Github Personal Access Token, save the token as a secret in AWS Secrets Manager. Provide the ARN. Ensure it is <code>plaintext</code>.
       </td>
     </tr>
     <!-- <tr><td colspan=3></td></tr> -->

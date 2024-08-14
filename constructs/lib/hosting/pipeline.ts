@@ -67,7 +67,7 @@ export class PipelineConstruct extends Construct {
   /**
    * The build output bucket
    */
-  public buildOutputBucket: IBucket;
+  // public buildOutputBucket: IBucket;
 
   /**
    * The Lambda function for sync.js
@@ -79,15 +79,15 @@ export class PipelineConstruct extends Construct {
     super(scope, id);
 
     // output bucket
-    this.buildOutputBucket = new Bucket(this, "BuildOutputBucket", {
-      bucketName: `${props.application}-${props.service}-${props.environment}-output`,
-      encryption: BucketEncryption.S3_MANAGED,
-      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-      objectOwnership: ObjectOwnership.OBJECT_WRITER,
-      enforceSSL: true,
-      removalPolicy: RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-    });
+    // this.buildOutputBucket = new Bucket(this, "BuildOutputBucket", {
+    //   bucketName: `${props.application}-${props.service}-${props.environment}-output`,
+    //   encryption: BucketEncryption.S3_MANAGED,
+    //   blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+    //   objectOwnership: ObjectOwnership.OBJECT_WRITER,
+    //   enforceSSL: true,
+    //   removalPolicy: RemovalPolicy.DESTROY,
+    //   autoDeleteObjects: true,
+    // });
 
     this.codeBuildProject = this.createBuildProject(props);
     this.invalidationProject = this.setupCacheInvalidation(props);
@@ -158,7 +158,7 @@ export class PipelineConstruct extends Construct {
   /**
    * Configure Lambda function for syncing buckets
    * @param props 
-   */
+   *
   private setupSyncBucketsFunction(props: PipelineProps) {
     // this.syncBucketsFunction.addEnvironment('PIPELINE_NAME', this.codePipeline.pipelineName);
     this.syncBucketsFunction.addEnvironment('OUTPUT_BUCKET', this.buildOutputBucket.bucketName);
@@ -294,15 +294,15 @@ export class PipelineConstruct extends Construct {
     );
 
     // Grant project permission to write files in output bucket
-    this.buildOutputBucket.addToResourcePolicy(
-      new PolicyStatement({
-        effect: Effect.ALLOW,
-        actions: ["s3:PutObject"],
-        resources: [`${this.buildOutputBucket.bucketArn}/*`],
-        // @ts-ignore
-        principals: [new ArnPrincipal(project.role.roleArn)],
-      })
-    );
+    // this.buildOutputBucket.addToResourcePolicy(
+    //   new PolicyStatement({
+    //     effect: Effect.ALLOW,
+    //     actions: ["s3:PutObject"],
+    //     resources: [`${this.buildOutputBucket.bucketArn}/*`],
+    //     // @ts-ignore
+    //     principals: [new ArnPrincipal(project.role.roleArn)],
+    //   })
+    // );
 
     // Grant project read/write permissions on hosting bucket
     props.HostingBucket.grantReadWrite(project.grantPrincipal);
@@ -356,14 +356,14 @@ export class PipelineConstruct extends Construct {
     );
 
     // Allow pipeline to write to the build output bucket
-    this.buildOutputBucket.addToResourcePolicy(
-      new PolicyStatement({
-        effect: Effect.ALLOW,
-        actions: ["s3:PutObject"],
-        resources: [`${this.buildOutputBucket.bucketArn}/*`],
-        principals: [new ArnPrincipal(pipeline.role.roleArn)],
-      })
-    );
+    // this.buildOutputBucket.addToResourcePolicy(
+    //   new PolicyStatement({
+    //     effect: Effect.ALLOW,
+    //     actions: ["s3:PutObject"],
+    //     resources: [`${this.buildOutputBucket.bucketArn}/*`],
+    //     principals: [new ArnPrincipal(pipeline.role.roleArn)],
+    //   })
+    // );
 
     // Allow pipeline to write to the hosting bucket
     props.HostingBucket.addToResourcePolicy(
