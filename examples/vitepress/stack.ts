@@ -29,8 +29,8 @@ const appStackProps: StaticSiteProps = {
   // buildSpecFilePath: '',
   buildProps: {
     runtime: 18, // nodejs version
-    installcmd: "npx pnpm i --store=node_modules/.pnpm-store",
-    buildcmd: "pnpm run build",
+    installcmd: "npx pnpm i",
+    buildcmd: "npx vitepress build docs",
     outputdir: "docs/.vitepress/dist/"
   }
 };
