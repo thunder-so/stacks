@@ -10,7 +10,6 @@ import { CloudFrontTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 import { createCloudFrontDistributionForS3, CreateCloudFrontDistributionForS3Props, CreateCloudFrontDistributionForS3Response } from '@aws-solutions-constructs/core'
 
-
 export interface HostingProps {
     application: string;
     service: string;
@@ -91,7 +90,7 @@ export class HostingConstruct extends Construct {
         const bucketNamePrefix = `${props.application}-${props.service}-${props.environment}`;
 
         // Hosting bucket access log bucket
-        const hostingLogsBucket = new Bucket(this, "HostingBucketLogsBucket", {
+        const hostingLogsBucket = new Bucket(this, "OriginLogsBucket", {
             bucketName: `${bucketNamePrefix}-hosting-logs`,
             encryption: BucketEncryption.S3_MANAGED,
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
@@ -104,7 +103,7 @@ export class HostingConstruct extends Construct {
         // primary hosting bucket
         const bucket = new Bucket(this, "HostingBucket", {
             bucketName: `${bucketNamePrefix}-hosting`,
-            versioned: false,
+            versioned: true,
             serverAccessLogsBucket: hostingLogsBucket,
             enforceSSL: true,
             encryption: BucketEncryption.S3_MANAGED,
@@ -116,8 +115,6 @@ export class HostingConstruct extends Construct {
             }),
             removalPolicy: RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
-            websiteIndexDocument: 'index.html',
-            websiteErrorDocument: 'index.html',
         });
 
         // Setting the origin to HTTP server
