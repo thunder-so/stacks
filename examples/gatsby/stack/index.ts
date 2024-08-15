@@ -29,7 +29,7 @@ const appStackProps: StaticSiteProps = {
   // buildSpecFilePath: '',
   buildProps: {
     runtime: 20, // nodejs version
-    installcmd: "npm ci",
+    installcmd: "npm install",
     buildcmd: "npm run build",
     outputdir: "public/"
   },
