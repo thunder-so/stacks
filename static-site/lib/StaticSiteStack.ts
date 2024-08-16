@@ -1,7 +1,8 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
+import { Stack } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { ApplicationConstruct, EnvironmentConstruct, HostingConstruct, PipelineConstruct } from '../../constructs';
 import type { StaticSiteProps } from './StaticSiteProps'; 
+import { BuildEnvironmentVariableType } from 'aws-cdk-lib/aws-codebuild';
 
 export class StaticSiteStack extends Stack {
   constructor(scope: Construct, id: string, props?: StaticSiteProps) {
@@ -55,6 +56,7 @@ export class StaticSiteStack extends Stack {
         outputdir: props.buildProps?.outputdir as string,
       },
       // buildEnvFilePath: props.buildEnvFilePath as string,
+      buildEnvironmentVariables: props.buildEnvironmentVariables as Record<string, { value: string; type: BuildEnvironmentVariableType.PARAMETER_STORE }>
     });
 
   }

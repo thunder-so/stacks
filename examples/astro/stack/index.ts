@@ -37,7 +37,9 @@ const appStackProps: StaticSiteProps = {
   // Custom CloudFront Functions for URL rewrite
   edgeFunctionFilePath: 'stack/urlrewrite.js',
 
-  buildEnvFilePath: '.env'
+  buildEnvironmentVariables: {
+    VITE_URL: { value: '/thunder/examples/astro' }
+  }
 
 };
 

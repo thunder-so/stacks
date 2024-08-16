@@ -7,7 +7,7 @@ import { Construct } from "constructs";
 import { Aws, Duration, RemovalPolicy, Stack, SecretValue, CfnParameter } from 'aws-cdk-lib';
 import { PolicyStatement, Effect, ArnPrincipal, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
-import { Artifacts, GitHubSourceCredentials, Project, PipelineProject, LinuxBuildImage, LinuxArmBuildImage, ComputeType, Source, BuildSpec } from "aws-cdk-lib/aws-codebuild";
+import { Artifacts, GitHubSourceCredentials, Project, PipelineProject, LinuxBuildImage, LinuxArmBuildImage, ComputeType, Source, BuildSpec, BuildEnvironmentVariable, BuildEnvironmentVariableType } from "aws-cdk-lib/aws-codebuild";
 import { Artifact, Pipeline, PipelineType, StageProps } from 'aws-cdk-lib/aws-codepipeline';
 import { GitHubSourceAction, GitHubTrigger, CodeBuildAction, S3DeployAction, LambdaInvokeAction } from 'aws-cdk-lib/aws-codepipeline-actions';
 import { Function, Runtime, Code } from 'aws-cdk-lib/aws-lambda';
@@ -39,6 +39,7 @@ export interface PipelineProps {
     outputdir: string;
   };
   // buildEnvFilePath?: string;
+  buildEnvironmentVariables?: Record<string, { value: string; type: BuildEnvironmentVariableType.PARAMETER_STORE }>
 }
 
 export class PipelineConstruct extends Construct {
@@ -87,23 +88,6 @@ export class PipelineConstruct extends Construct {
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
-
-    // check for .env
-    // if (props.buildEnvFilePath) {
-    //   const __filename = fileURLToPath(import.meta.url);
-    //   const __dirname = path.dirname(__filename);
-
-    //   const envFilePath = path.resolve(__dirname, props.buildEnvFilePath);
-
-    //   if (fs.existsSync(envFilePath)) {
-    //     const envFile = fs.readFileSync(envFilePath, 'utf-8');
-    //     const envVars = yaml.parse(envFile) as { [name: string]: any };
-
-    //     Object.entries(envVars).forEach(([name, value]) => {
-    //       this.environmentVariables[name] = value;
-    //     });
-    //   }
-    // }
 
     // create build project
     this.codeBuildProject = this.createBuildProject(props);
@@ -251,7 +235,7 @@ export class PipelineConstruct extends Construct {
                     nodejs: props.buildProps?.runtime || '20'
                 },
                 commands: [ 
-                  `echo "SUPABASE_KEY $SUPABASE_KEY"`,
+                  'echo "VITE_URL: $VITE_URL"',
                   `cd ${props.sourceProps?.rootdir || '.'}`,
                   props.buildProps?.installcmd || 'npm install'
                 ]
@@ -267,6 +251,14 @@ export class PipelineConstruct extends Construct {
       })
     }
 
+    // environment variables
+    const buildEnvironmentVariables = Object.entries(props.buildEnvironmentVariables || {}).reduce(
+      (acc, [name, { value }]) => {
+        acc[name] = { value, type: BuildEnvironmentVariableType.PARAMETER_STORE };
+        return acc;
+      },
+      {} as Record<string, { value: string; type: BuildEnvironmentVariableType.PARAMETER_STORE }>
+    );
     
     // create the cloudbuild project
     const project = new Project(this, "CodeBuildProject", {
@@ -287,7 +279,7 @@ export class PipelineConstruct extends Construct {
         // computeType: ComputeType.MEDIUM,
         privileged: true,
       },
-      // environmentVariables: this.environmentVariables,
+      environmentVariables: buildEnvironmentVariables,
       logging: {
         s3: {
           bucket: buildLogsBucket,

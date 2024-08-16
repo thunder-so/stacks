@@ -34,7 +34,7 @@ const appStackProps: StaticSiteProps = {
     outputdir: "docs/.vitepress/dist/"
   },
 
-  buildEnvFilePath: '.env'
+  // buildEnvFilePath: '.env'
 };
 
 new StaticSiteStack(new App(), `${appStackProps.application}-${appStackProps.service}-${appStackProps.environment}-stack`, appStackProps);

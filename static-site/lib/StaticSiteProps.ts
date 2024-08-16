@@ -1,4 +1,5 @@
 import {type StackProps} from "aws-cdk-lib";
+import { BuildEnvironmentVariableType } from "aws-cdk-lib/aws-codebuild";
 
 export interface StaticSiteProps extends StackProps {
     /**
@@ -61,6 +62,8 @@ export interface StaticSiteProps extends StackProps {
      * If you have custom environments for build step, provide path to .env file
      */
     // readonly buildEnvFilePath?: string;
+
+    readonly buildEnvironmentVariables?: Record<string, { value: string; }>;
 
     /**
      * Optional. If you have a custom CloudFront Functions file for your app, provide the relative path to the file.
