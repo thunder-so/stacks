@@ -54,7 +54,7 @@ export class PipelineConstruct extends Construct {
   /**
    * Deployment action as a CodeBuild Project
    */
-  public deployAction: Project;
+  public syncAction: Project;
 
   /**
    * The commit reference hash
@@ -95,14 +95,14 @@ export class PipelineConstruct extends Construct {
    * @param props 
    * 
    */
-  private setupPostDeployAction(props: PipelineProps): Project {
+  private setupSyncAction(props: PipelineProps): Project {
 
     // set up cloudfront invalidation 
-    const cloudfrontInvalidationRole = new Role(this, 'CloudfrontInvalidationRole', {
+    const syncActionRole = new Role(this, 'SyncActionRole', {
       assumedBy: new ServicePrincipal('codebuild.amazonaws.com'),
     });
     
-    cloudfrontInvalidationRole.addToPolicy(
+    syncActionRole.addToPolicy(
       new PolicyStatement({
         effect: Effect.ALLOW,
         actions: ['cloudfront:CreateInvalidation'],
@@ -116,9 +116,9 @@ export class PipelineConstruct extends Construct {
       phases: {
         build: {
           commands: [
-            'echo "Commit ID: $COMMIT_ID"',
-            'echo "Output Bucket: $OUTPUT_BUCKET"',
-            'echo "Hosting Bucket: $HOSTING_BUCKET"',
+            // 'echo "Commit ID: $COMMIT_ID"',
+            // 'echo "Output Bucket: $OUTPUT_BUCKET"',
+            // 'echo "Hosting Bucket: $HOSTING_BUCKET"',
             'aws s3 cp s3://$OUTPUT_BUCKET/$COMMIT_ID/ s3://$HOSTING_BUCKET/ --recursive --metadata revision=$COMMIT_ID',
             'aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"'
           ],
@@ -133,7 +133,7 @@ export class PipelineConstruct extends Construct {
         buildImage: LinuxBuildImage.STANDARD_5_0,
         computeType: ComputeType.SMALL,
       },
-      role: cloudfrontInvalidationRole,
+      role: syncActionRole,
       environmentVariables: {
         CLOUDFRONT_DISTRIBUTION_ID: { value: props.Distribution.distributionId },
         HOSTING_BUCKET: { value: props.HostingBucket.bucketName },
@@ -177,7 +177,6 @@ export class PipelineConstruct extends Construct {
     );
 
     // Grant project read/write permissions on hosting bucket
-    // props.HostingBucket.grantReadWrite(project.grantPrincipal);
     props.HostingBucket.addToResourcePolicy(
       new PolicyStatement({
         effect: Effect.ALLOW,
@@ -414,12 +413,12 @@ export class PipelineConstruct extends Construct {
     //   runOrder: 3,
     // });
 
-    this.deployAction = this.setupPostDeployAction(props);
+    this.syncAction = this.setupSyncAction(props);
 
     // Post deploy: sync, invalidate
-    const postDeployAction = new CodeBuildAction({
-      actionName: 'PostDeployAction',
-      project: this.deployAction,
+    const syncAction = new CodeBuildAction({
+      actionName: 'SyncAction',
+      project: this.syncAction,
       input: buildOutput,
       runOrder: 4,
       environmentVariables: {
@@ -429,7 +428,7 @@ export class PipelineConstruct extends Construct {
 
     pipeline.addStage({
       stageName: 'Deploy',
-      actions: [deployAction, postDeployAction]
+      actions: [deployAction, syncAction]
     })
 
     // return our pipeline
