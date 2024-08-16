@@ -65,7 +65,7 @@ export class HostingConstruct extends Construct {
       
       this.createCloudfrontDistribution(props);
 
-      if(props.domain) {
+      if(props.domain && props.globalCertificateArn && props.hostedZoneId) {
         this.createDnsRecords(props);
       }
 
@@ -283,7 +283,7 @@ export class HostingConstruct extends Construct {
           ...(props.domain && props.globalCertificateArn
             ? {
                 domainNames: [props.domain],
-                certificate: Certificate.fromCertificateArn(this, `${props.service}-global-certificate`, props.globalCertificateArn),
+                certificate: Certificate.fromCertificateArn(this, `${this.resourceIdPrefix}-global-certificate`, props.globalCertificateArn),
               }
             : {}),
         }
@@ -332,7 +332,7 @@ export class HostingConstruct extends Construct {
         const domainParts = props.domain?.split('.');
         if (!domainParts) return;
 
-        return HostedZone.fromHostedZoneAttributes(this, `${props.service}-hosted-zone`, {
+        return HostedZone.fromHostedZoneAttributes(this, `${this.resourceIdPrefix}-hosted-zone`, {
             hostedZoneId: props.hostedZoneId as string,
             zoneName: domainParts[domainParts.length - 1] // Support subdomains
         });
@@ -349,14 +349,14 @@ export class HostingConstruct extends Construct {
         const dnsTarget = RecordTarget.fromAlias(new CloudFrontTarget(this.distribution));
 
         // Create a record for IPv4
-        new ARecord(this, `${props.service}-ipv4-record`, {
+        new ARecord(this, `${this.resourceIdPrefix}-ipv4-record`, {
             recordName: props.domain,
             zone: hostedZone as IHostedZone,
             target: dnsTarget,
         });
 
         // Create a record for IPv6
-        new AaaaRecord(this, `${props.service}-ipv6-record`, {
+        new AaaaRecord(this, `${this.resourceIdPrefix}-ipv6-record`, {
             recordName: props.domain,
             zone: hostedZone as IHostedZone,
             target: dnsTarget,

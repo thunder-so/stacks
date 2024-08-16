@@ -34,7 +34,10 @@ export class StaticSiteStack extends Stack {
       application: props.application,
       environment: props.environment,
       service: props.service,
-      edgeFunctionFilePath: props.edgeFunctionFilePath as string
+      edgeFunctionFilePath: props.edgeFunctionFilePath as string,
+      domain: props.domain as string,
+      globalCertificateArn: props.globalCertificateArn as string,
+      hostedZoneId: props.hostedZoneId as string,
     });
 
     const pipeline = new PipelineConstruct(this, 'Pipeline', {

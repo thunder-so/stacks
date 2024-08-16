@@ -40,7 +40,12 @@ const appStackProps: StaticSiteProps = {
 
   buildEnvironmentVariables: {
     VITE_URL: { value: '/thunder/examples/astro' }
-  }
+  },
+
+  domain: 'astro.thunder.so',
+  globalCertificateArn: 'arn:aws:acm:us-east-1:665186350589:certificate/d7c10cb1-d3fb-4547-b6ba-1717f20a25cf',
+  hostedZoneId: 'Z04172542KY36VFH88DJJ', // thunder.so
+
 
 };
 
