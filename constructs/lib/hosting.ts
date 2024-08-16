@@ -23,6 +23,8 @@ export interface HostingProps {
 
 export class HostingConstruct extends Construct {
 
+    public resourceIdPrefix: string;
+
     /**
      * The S3 bucket where the deployment assets gets stored.
      */
@@ -50,7 +52,9 @@ export class HostingConstruct extends Construct {
     
 
     constructor(scope: Construct, id: string, props: HostingProps) {
-      super(scope, id)
+      super(scope, id);
+
+      this.resourceIdPrefix = `${props.application}-${props.service}-${props.environment}`;
 
       // this.kv = this.createKV(props);
       this.createHostingBucket(props);
@@ -87,11 +91,10 @@ export class HostingConstruct extends Construct {
      * @private
      */
     private createHostingBucket(props: HostingProps) {
-        const bucketNamePrefix = `${props.application}-${props.service}-${props.environment}`;
 
         // Hosting bucket access log bucket
         const originLogsBucket = new Bucket(this, "OriginLogsBucket", {
-            bucketName: `${bucketNamePrefix}-origin-logs`,
+            bucketName: `${this.resourceIdPrefix}-origin-logs`,
             encryption: BucketEncryption.S3_MANAGED,
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
             objectOwnership: ObjectOwnership.OBJECT_WRITER,
@@ -102,7 +105,7 @@ export class HostingConstruct extends Construct {
 
         // primary hosting bucket
         const bucket = new Bucket(this, "HostingBucket", {
-            bucketName: `${bucketNamePrefix}-hosting`,
+            bucketName: `${this.resourceIdPrefix}-hosting`,
             versioned: true,
             serverAccessLogsBucket: originLogsBucket,
             enforceSSL: true,
@@ -129,11 +132,10 @@ export class HostingConstruct extends Construct {
      * @private
      */
     private createCloudfrontDistribution(props: HostingProps) {
-        const bucketNamePrefix = `${props.application}-${props.service}-${props.environment}`;
 
         // access logs bucket
         const accessLogsBucket = new Bucket(this, "AccessLogsBucket", {
-            bucketName: `${bucketNamePrefix}-access-logs`,
+            bucketName: `${this.resourceIdPrefix}-access-logs`,
             encryption: BucketEncryption.S3_MANAGED,
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
             objectOwnership: ObjectOwnership.OBJECT_WRITER,
@@ -251,7 +253,7 @@ export class HostingConstruct extends Construct {
       // });
 
         // finally, create distribution
-        const distributionName = `${props.application}-${props.service}-${props.environment}-cdn`;
+        const distributionName = `${this.resourceIdPrefix}-cdn`;
 
         const distributionProps = {
           comment: "Stack name: " + Aws.STACK_NAME,

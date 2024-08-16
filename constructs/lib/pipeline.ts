@@ -44,6 +44,8 @@ export interface PipelineProps {
 
 export class PipelineConstruct extends Construct {
 
+  public resourceIdPrefix: string;
+
   /**
    * The buildstep
    */
@@ -78,9 +80,11 @@ export class PipelineConstruct extends Construct {
   constructor(scope: Construct, id: string, props: PipelineProps) {
     super(scope, id);
 
+    this.resourceIdPrefix = `${props.application}-${props.service}-${props.environment}`;
+
     // output bucket
     this.buildOutputBucket = new Bucket(this, "BuildOutputBucket", {
-      bucketName: `${props.application}-${props.service}-${props.environment}-output`,
+      bucketName: `${this.resourceIdPrefix}-output`,
       encryption: BucketEncryption.S3_MANAGED,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       objectOwnership: ObjectOwnership.OBJECT_WRITER,
@@ -136,7 +140,7 @@ export class PipelineConstruct extends Construct {
     });
     
     const project = new Project(this, 'SyncActionProject', {
-      projectName: `${props.application}-${props.service}-${props.environment}-syncActionProject`,
+      projectName: `${this.resourceIdPrefix}-syncActionProject`,
       buildSpec: buildSpec,
       environment: {
         buildImage: LinuxBuildImage.STANDARD_5_0,
@@ -208,11 +212,10 @@ export class PipelineConstruct extends Construct {
    * @returns project
    */
   private createBuildProject(props: PipelineProps): Project {
-    const bucketNamePrefix = `${props.application}-${props.service}-${props.environment}`;
 
     // build logs bucket
     const buildLogsBucket = new Bucket(this, "BuildLogsBucket", {
-      bucketName: `${bucketNamePrefix}-build-logs`,
+      bucketName: `${this.resourceIdPrefix}-build-logs`,
       encryption: BucketEncryption.S3_MANAGED,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       objectOwnership: ObjectOwnership.OBJECT_WRITER,
@@ -263,7 +266,7 @@ export class PipelineConstruct extends Construct {
     
     // create the cloudbuild project
     const project = new Project(this, "CodeBuildProject", {
-      projectName: `${props.application}-${props.service}-${props.environment}-buildproject`,
+      projectName: `${this.resourceIdPrefix}-buildproject`,
       buildSpec: buildSpecYaml,
       timeout: Duration.minutes(10),
       source: Source.gitHub({
@@ -320,11 +323,10 @@ export class PipelineConstruct extends Construct {
    * @returns pipeline
    */
   private createPipeline(props: PipelineProps): Pipeline {
-    const bucketNamePrefix = `${props.application}-${props.service}-${props.environment}`;
 
     // build artifact bucket
     const artifactBucket = new Bucket(this, "ArtifactBucket", {
-      bucketName: `${bucketNamePrefix}-artifacts`,
+      bucketName: `${this.resourceIdPrefix}-artifacts`,
       encryption: BucketEncryption.S3_MANAGED,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       enforceSSL: true,
@@ -335,7 +337,7 @@ export class PipelineConstruct extends Construct {
     // Setup CodePipeline
     const pipeline = new Pipeline(this, "Pipeline", {
       artifactBucket: artifactBucket,
-      pipelineName: `${props.application}-${props.service}-${props.environment}-pipeline`,
+      pipelineName: `${this.resourceIdPrefix}-pipeline`,
       crossAccountKeys: false,
       pipelineType: PipelineType.V2
     });
