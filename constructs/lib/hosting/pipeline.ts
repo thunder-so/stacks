@@ -71,15 +71,15 @@ export class PipelineConstruct extends Construct {
     super(scope, id);
 
     // output bucket
-    // this.buildOutputBucket = new Bucket(this, "BuildOutputBucket", {
-    //   bucketName: `${props.application}-${props.service}-${props.environment}-output`,
-    //   encryption: BucketEncryption.S3_MANAGED,
-    //   blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-    //   objectOwnership: ObjectOwnership.OBJECT_WRITER,
-    //   enforceSSL: true,
-    //   removalPolicy: RemovalPolicy.DESTROY,
-    //   autoDeleteObjects: true,
-    // });
+    this.buildOutputBucket = new Bucket(this, "BuildOutputBucket", {
+      bucketName: `${props.application}-${props.service}-${props.environment}-output`,
+      encryption: BucketEncryption.S3_MANAGED,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      objectOwnership: ObjectOwnership.OBJECT_WRITER,
+      enforceSSL: true,
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    });
 
     // create build project
     this.codeBuildProject = this.createBuildProject(props);
@@ -95,18 +95,20 @@ export class PipelineConstruct extends Construct {
    * @param props 
    * 
    */
-  private setupPostDeployAction(props: PipelineProps, commitId: string): Project {
+  private setupPostDeployAction(props: PipelineProps): Project {
 
     // set up cloudfront invalidation 
     const cloudfrontInvalidationRole = new Role(this, 'CloudfrontInvalidationRole', {
       assumedBy: new ServicePrincipal('codebuild.amazonaws.com'),
     });
     
-    cloudfrontInvalidationRole.addToPolicy(new PolicyStatement({
-      effect: Effect.ALLOW,
-      actions: ['cloudfront:CreateInvalidation'],
-      resources: [`arn:aws:cloudfront::${props.Distribution.stack.account}:distribution/${props.Distribution.distributionId}`],
-    }));
+    cloudfrontInvalidationRole.addToPolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ['cloudfront:CreateInvalidation'],
+        resources: [`arn:aws:cloudfront::${props.Distribution.stack.account}:distribution/${props.Distribution.distributionId}`],
+      })
+    );
 
     // codebuild project to run shell commands
     const buildSpec = BuildSpec.fromObject({
@@ -117,7 +119,7 @@ export class PipelineConstruct extends Construct {
             'echo "Commit ID: $COMMIT_ID"',
             'echo "Output Bucket: $OUTPUT_BUCKET"',
             'echo "Hosting Bucket: $HOSTING_BUCKET"',
-            // 'aws s3 cp s3://$OUTPUT_BUCKET/$COMMIT_ID/ s3://$HOSTING_BUCKET/ --recursive --metadata revision=$COMMIT_ID',
+            'aws s3 cp s3://$OUTPUT_BUCKET/$COMMIT_ID/ s3://$HOSTING_BUCKET/ --recursive --metadata revision=$COMMIT_ID',
             'aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"'
           ],
         },
@@ -135,10 +137,59 @@ export class PipelineConstruct extends Construct {
       environmentVariables: {
         CLOUDFRONT_DISTRIBUTION_ID: { value: props.Distribution.distributionId },
         HOSTING_BUCKET: { value: props.HostingBucket.bucketName },
-        // OUTPUT_BUCKET: { value: this.buildOutputBucket.bucketName },
-        COMMIT_ID: { value: commitId }
+        OUTPUT_BUCKET: { value: this.buildOutputBucket.bucketName },
+        COMMIT_ID: { value: this.commitId }
       },
     });
+
+    // Allow project to read from the output bucket
+    project.addToRolePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ["s3:ListBucket", "s3:GetObject", "s3:PutObject"],
+        resources: [`${this.buildOutputBucket.bucketArn}/*`],
+      })
+    );
+
+    this.buildOutputBucket.addToResourcePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        // @ts-ignore
+        principals: [new ArnPrincipal(project.role.roleArn)],
+        actions: ["s3:ListBucket", "s3:GetObject", "s3:PutObject"],
+        resources: [
+          this.buildOutputBucket.bucketArn,
+          `${this.buildOutputBucket.bucketArn}/*`
+        ],
+      })
+    )
+
+    // Allow project to write to the hosting bucket
+    project.addToRolePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ["s3:ListBucket", "s3:GetObject", "s3:PutObject"],
+        resources: [
+          `${props.HostingBucket.bucketArn}`,
+          `${props.HostingBucket.bucketArn}/*`
+        ],
+      })
+    );
+
+    // Grant project read/write permissions on hosting bucket
+    // props.HostingBucket.grantReadWrite(project.grantPrincipal);
+    props.HostingBucket.addToResourcePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        // @ts-ignore
+        principals: [new ArnPrincipal(project.role.roleArn)],
+        actions: ["s3:GetObject", "s3:PutObject", "s3:ListBucket"],
+        resources: [
+          props.HostingBucket.bucketArn,
+          `${props.HostingBucket.bucketArn}/*`
+        ],
+      })
+    )
 
     return project;
   }
@@ -229,15 +280,15 @@ export class PipelineConstruct extends Construct {
     );
 
     // Grant project permission to write files in output bucket
-    // this.buildOutputBucket.addToResourcePolicy(
-    //   new PolicyStatement({
-    //     effect: Effect.ALLOW,
-    //     actions: ["s3:PutObject"],
-    //     resources: [`${this.buildOutputBucket.bucketArn}/*`],
-    //     // @ts-ignore
-    //     principals: [new ArnPrincipal(project.role.roleArn)],
-    //   })
-    // );
+    this.buildOutputBucket.addToResourcePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ["s3:PutObject"],
+        resources: [`${this.buildOutputBucket.bucketArn}/*`],
+        // @ts-ignore
+        principals: [new ArnPrincipal(project.role.roleArn)],
+      })
+    );
 
     // Grant project read/write permissions on hosting bucket
     props.HostingBucket.grantReadWrite(project.grantPrincipal);
@@ -291,14 +342,14 @@ export class PipelineConstruct extends Construct {
     );
 
     // Allow pipeline to write to the build output bucket
-    // this.buildOutputBucket.addToResourcePolicy(
-    //   new PolicyStatement({
-    //     effect: Effect.ALLOW,
-    //     actions: ["s3:PutObject"],
-    //     resources: [`${this.buildOutputBucket.bucketArn}/*`],
-    //     principals: [new ArnPrincipal(pipeline.role.roleArn)],
-    //   })
-    // );
+    this.buildOutputBucket.addToResourcePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ["s3:PutObject"],
+        resources: [`${this.buildOutputBucket.bucketArn}/*`],
+        principals: [new ArnPrincipal(pipeline.role.roleArn)],
+      })
+    );
 
     // Allow pipeline to write to the hosting bucket
     props.HostingBucket.addToResourcePolicy(
@@ -330,7 +381,7 @@ export class PipelineConstruct extends Construct {
     });
 
     // extract the commitId from the sourceAction
-    this.commitId = sourceAction.variables.commitId;
+    this.commitId = sourceAction.variables.commitId as string;
 
     // Build Step
     const buildAction = new CodeBuildAction({
@@ -347,35 +398,33 @@ export class PipelineConstruct extends Construct {
     });
 
     // Deploy Step
-    // const deployAction = new S3DeployAction({
-    //   actionName: 'DeployAction',
-    //   input: buildOutput,
-    //   bucket: this.buildOutputBucket,
-    //   objectKey: `${sourceAction.variables.commitId}`, // store in commit hash directories
-    //   runOrder: 3,
-    // });
-
-    // Deploy directly to Hosting Bucket
     const deployAction = new S3DeployAction({
       actionName: 'DeployAction',
       input: buildOutput,
-      bucket: props.HostingBucket,
+      bucket: this.buildOutputBucket,
+      objectKey: this.commitId, // store in commit hash directories
       runOrder: 3,
     });
 
-    // pipeline.addStage({
-    //   stageName: "Deploy",
-    //   actions: [deployAction],
+    // Deploy directly to Hosting Bucket
+    // const deployAction = new S3DeployAction({
+    //   actionName: 'DeployAction',
+    //   input: buildOutput,
+    //   bucket: props.HostingBucket,
+    //   runOrder: 3,
     // });
 
-    this.deployAction = this.setupPostDeployAction(props, this.commitId);
+    this.deployAction = this.setupPostDeployAction(props);
 
-    // Cache invalidation step
+    // Post deploy: sync, invalidate
     const postDeployAction = new CodeBuildAction({
       actionName: 'PostDeployAction',
       project: this.deployAction,
       input: buildOutput,
       runOrder: 4,
+      environmentVariables: {
+        COMMIT_ID: { value: this.commitId }
+      }
     });
 
     pipeline.addStage({
