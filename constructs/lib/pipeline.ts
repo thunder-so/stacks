@@ -225,7 +225,8 @@ export class PipelineConstruct extends Construct {
     let buildSpecYaml;
     if (props.buildSpecFilePath) {
       const buildSpecFile = fs.readFileSync(props.buildSpecFilePath, "utf8");
-      buildSpecYaml = yaml.parse(buildSpecFile);  
+      const yamlFile = yaml.parse(buildSpecFile);
+      buildSpecYaml = BuildSpec.fromObject(yamlFile);
     } else {
       buildSpecYaml = BuildSpec.fromObject({
         version: '0.2',
