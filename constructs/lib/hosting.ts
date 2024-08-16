@@ -4,7 +4,7 @@ import { Construct } from "constructs";
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { PolicyStatement, Effect, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { HttpOrigin, S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
-import { CfnDistribution, Distribution, type IDistribution, CachePolicy, SecurityPolicyProtocol, HttpVersion, PriceClass, ResponseHeadersPolicy, HeadersFrameOption, HeadersReferrerPolicy, BehaviorOptions, AllowedMethods, ViewerProtocolPolicy, CacheCookieBehavior, CacheHeaderBehavior, CacheQueryStringBehavior, CfnOriginAccessControl, Function as CloudFrontFunction, FunctionCode as CloudFrontFunctionCode, FunctionEventType } from "aws-cdk-lib/aws-cloudfront";
+import { CfnDistribution, Distribution, type IDistribution, CachePolicy, SecurityPolicyProtocol, HttpVersion, PriceClass, ResponseHeadersPolicy, HeadersFrameOption, HeadersReferrerPolicy, BehaviorOptions, AllowedMethods, ViewerProtocolPolicy, CacheCookieBehavior, CacheHeaderBehavior, CacheQueryStringBehavior, CfnOriginAccessControl, Function as CloudFrontFunction, FunctionCode as CloudFrontFunctionCode, FunctionEventType, OriginAccessIdentity, CachedMethods } from "aws-cdk-lib/aws-cloudfront";
 import { AaaaRecord, ARecord, HostedZone, type IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { CloudFrontTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
@@ -23,7 +23,7 @@ export interface HostingProps {
 
 export class HostingConstruct extends Construct {
 
-    public resourceIdPrefix: string;
+    private resourceIdPrefix: string;
 
     /**
      * The S3 bucket where the deployment assets gets stored.
@@ -121,7 +121,10 @@ export class HostingConstruct extends Construct {
         });
 
         // Setting the origin to HTTP server
-        this.s3Origin = new S3Origin(bucket);
+        this.s3Origin = new S3Origin(bucket, {
+          connectionAttempts: 2,
+          connectionTimeout: Duration.seconds(3)
+        });
 
         this.hostingBucket = bucket;
     }
@@ -227,9 +230,11 @@ export class HostingConstruct extends Construct {
       // imgBehaviour
       const imgBehaviour: BehaviorOptions = {
         origin: this.s3Origin,
+        compress: true,
         responseHeadersPolicy: responseHeadersPolicy,
         cachePolicy: imgCachePolicy,
-        allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
+        allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+        cachedMethods: CachedMethods.CACHE_GET_HEAD_OPTIONS,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS
       };
 
@@ -239,18 +244,10 @@ export class HostingConstruct extends Construct {
         compress: true,
         responseHeadersPolicy: responseHeadersPolicy,
         cachePolicy: staticAssetsCachePolicy,
-        allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
+        allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+        cachedMethods: CachedMethods.CACHE_GET_HEAD_OPTIONS,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS
       };
-
-      // const oac = new CfnOriginAccessControl(this, "OAC", {
-      //   originAccessControlConfig: {
-      //     name: "OAC" + "-" + Aws.STACK_NAME + "-" + Aws.REGION,
-      //     originAccessControlOriginType: "s3",
-      //     signingBehavior: "always",
-      //     signingProtocol: "sigv4",
-      //   },
-      // });
 
         // finally, create distribution
         const distributionName = `${this.resourceIdPrefix}-cdn`;

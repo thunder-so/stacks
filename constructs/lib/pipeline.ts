@@ -44,7 +44,7 @@ export interface PipelineProps {
 
 export class PipelineConstruct extends Construct {
 
-  public resourceIdPrefix: string;
+  private resourceIdPrefix: string;
 
   /**
    * The buildstep
@@ -59,12 +59,12 @@ export class PipelineConstruct extends Construct {
   /**
    * Deployment action as a CodeBuild Project
    */
-  public syncAction: Project;
+  private syncAction: Project;
 
   /**
    * The commit reference hash
    */
-  public commitId: string;
+  private commitId: string;
 
   /**
    * The build output bucket
