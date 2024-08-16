@@ -3,7 +3,6 @@
     "version": "0.4.0",
     "workspaces": [
         "constructs",
-        "example-stack",
         "static-site"
     ],
     "scripts": {},

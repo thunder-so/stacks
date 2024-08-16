@@ -35,7 +35,9 @@ const appStackProps: StaticSiteProps = {
   },
 
   // Custom CloudFront Functions for URL rewrite
-  edgeFunctionFilePath: 'stack/urlrewrite.js'
+  edgeFunctionFilePath: 'stack/urlrewrite.js',
+
+  buildEnvFilePath: '.env'
 
 };
 

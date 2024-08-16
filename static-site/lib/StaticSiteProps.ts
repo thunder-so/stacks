@@ -58,6 +58,11 @@ export interface StaticSiteProps extends StackProps {
     };
 
     /**
+     * If you have custom environments for build step, provide path to .env file
+     */
+    // readonly buildEnvFilePath?: string;
+
+    /**
      * Optional. If you have a custom CloudFront Functions file for your app, provide the relative path to the file.
      */
     readonly edgeFunctionFilePath?: string;

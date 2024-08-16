@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import yaml from "yaml";
+// import dotenv from "dotenv";
 import { fileURLToPath } from 'url';
 import { Construct } from "constructs";
 import { Aws, Duration, RemovalPolicy, Stack, SecretValue, CfnParameter } from 'aws-cdk-lib';
@@ -37,6 +38,7 @@ export interface PipelineProps {
     buildcmd: string;
     outputdir: string;
   };
+  // buildEnvFilePath?: string;
 }
 
 export class PipelineConstruct extends Construct {
@@ -66,6 +68,11 @@ export class PipelineConstruct extends Construct {
    */
   public buildOutputBucket: IBucket;
 
+  /**
+   * Environment variables
+   */
+  // public environmentVariables: { [name: string]: any } = {};
+
 
   constructor(scope: Construct, id: string, props: PipelineProps) {
     super(scope, id);
@@ -80,6 +87,23 @@ export class PipelineConstruct extends Construct {
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
+
+    // check for .env
+    // if (props.buildEnvFilePath) {
+    //   const __filename = fileURLToPath(import.meta.url);
+    //   const __dirname = path.dirname(__filename);
+
+    //   const envFilePath = path.resolve(__dirname, props.buildEnvFilePath);
+
+    //   if (fs.existsSync(envFilePath)) {
+    //     const envFile = fs.readFileSync(envFilePath, 'utf-8');
+    //     const envVars = yaml.parse(envFile) as { [name: string]: any };
+
+    //     Object.entries(envVars).forEach(([name, value]) => {
+    //       this.environmentVariables[name] = value;
+    //     });
+    //   }
+    // }
 
     // create build project
     this.codeBuildProject = this.createBuildProject(props);
@@ -97,11 +121,12 @@ export class PipelineConstruct extends Construct {
    */
   private setupSyncAction(props: PipelineProps): Project {
 
-    // set up cloudfront invalidation 
+    // set up role for project
     const syncActionRole = new Role(this, 'SyncActionRole', {
       assumedBy: new ServicePrincipal('codebuild.amazonaws.com'),
     });
-    
+
+    // allow role to create cloudfront invalidations
     syncActionRole.addToPolicy(
       new PolicyStatement({
         effect: Effect.ALLOW,
@@ -126,8 +151,8 @@ export class PipelineConstruct extends Construct {
       },
     });
     
-    const project = new Project(this, 'CloudfrontInvalidationProject', {
-      projectName: `${props.application}-${props.service}-${props.environment}-deployActionProject`,
+    const project = new Project(this, 'SyncActionProject', {
+      projectName: `${props.application}-${props.service}-${props.environment}-syncActionProject`,
       buildSpec: buildSpec,
       environment: {
         buildImage: LinuxBuildImage.STANDARD_5_0,
@@ -226,6 +251,7 @@ export class PipelineConstruct extends Construct {
                     nodejs: props.buildProps?.runtime || '20'
                 },
                 commands: [ 
+                  `echo "SUPABASE_KEY $SUPABASE_KEY"`,
                   `cd ${props.sourceProps?.rootdir || '.'}`,
                   props.buildProps?.installcmd || 'npm install'
                 ]
@@ -261,7 +287,7 @@ export class PipelineConstruct extends Construct {
         // computeType: ComputeType.MEDIUM,
         privileged: true,
       },
-      // environmentVariables: codeBuildEnvVars,
+      // environmentVariables: this.environmentVariables,
       logging: {
         s3: {
           bucket: buildLogsBucket,

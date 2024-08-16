@@ -90,8 +90,8 @@ export class HostingConstruct extends Construct {
         const bucketNamePrefix = `${props.application}-${props.service}-${props.environment}`;
 
         // Hosting bucket access log bucket
-        const hostingLogsBucket = new Bucket(this, "OriginLogsBucket", {
-            bucketName: `${bucketNamePrefix}-hosting-logs`,
+        const originLogsBucket = new Bucket(this, "OriginLogsBucket", {
+            bucketName: `${bucketNamePrefix}-origin-logs`,
             encryption: BucketEncryption.S3_MANAGED,
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
             objectOwnership: ObjectOwnership.OBJECT_WRITER,
@@ -104,7 +104,7 @@ export class HostingConstruct extends Construct {
         const bucket = new Bucket(this, "HostingBucket", {
             bucketName: `${bucketNamePrefix}-hosting`,
             versioned: true,
-            serverAccessLogsBucket: hostingLogsBucket,
+            serverAccessLogsBucket: originLogsBucket,
             enforceSSL: true,
             encryption: BucketEncryption.S3_MANAGED,
             blockPublicAccess: new BlockPublicAccess({
