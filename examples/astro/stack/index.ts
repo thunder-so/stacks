@@ -26,7 +26,7 @@ const appStackProps: StaticSiteProps = {
   githubAccessTokenArn: 'arn:aws:secretsmanager:us-east-1:665186350589:secret:githubpat-0abFlT',
 
   // Either provide a buildspec.yml file OR leave empty and fill out buildProps
-  // buildSpecFilePath: '',
+  buildSpecFilePath: 'stack/buildspec.yml',
   buildProps: {
     runtime: 18, // nodejs version
     installcmd: "npm ci",

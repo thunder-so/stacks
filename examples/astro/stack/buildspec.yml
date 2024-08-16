@@ -1,0 +1,18 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20 
+    commands: 
+      - cd examples/astro/
+      - npm install
+
+  build:
+    commands:
+      - npx astro build
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: examples/astro/dist/
