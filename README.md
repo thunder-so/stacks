@@ -21,9 +21,10 @@ Install the package and its required dependencies:
 npm i @thunderso/cdk-spa --save-dev
 ```
 
-If you do not have already, your `package.json` must also contain `aws-cdk-lib` and `tsx`:
+If you do not have already, your `package.json` must also contain `tsx` and this specific version of `aws-cdk-lib` :
+
 ```bash
-npm i aws-cdk-lib tsx --save-dev
+npm i tsx aws-cdk-lib@2.150.0 --save-dev
 ```
 
 ## Setup

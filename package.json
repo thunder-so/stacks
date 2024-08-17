@@ -38,10 +38,11 @@
     "typescript": "~5.5.4"
   },
   "dependencies": {
+    "@aws-solutions-constructs/core": "^2.65.0",
     "aws-cdk-lib": "2.150.0",
     "constructs": "^10.3.0",
+    "shelljs": "^0.8.5",
     "source-map-support": "^0.5.21",
-    "yaml": "^2.5.0",
-    "@aws-solutions-constructs/core": "^2.65.0"
+    "yaml": "^2.5.0"
   }
 }

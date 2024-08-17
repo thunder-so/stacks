@@ -18,7 +18,6 @@
     "typescript": "^5.5.4"
   },
   "devDependencies": {
-    "aws-cdk-lib": "^2.151.0",
     "tsx": "^4.17.0"
   }
 }

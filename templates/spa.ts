@@ -15,16 +15,18 @@ const appStackProps: SPAProps = {
   sourceProps: {
     owner: 'your-github-username',
     repo: 'your-repo-name',
-    branchOrRef: 'main'
+    branchOrRef: 'main',
+    rootdir: '.'
   },
 
   // Auto deployment
   // - create a Github personal access token
-  // - store in Secrets Manager
+  // - store in Secrets Manager as plaintext
   githubAccessTokenArn: 'arn:aws:ssm:us-east-1:123456789012:parameter/github-token',
 
-  // Either provide a buildspec.yml file OR leave empty and fill out buildProps
-  buildSpecFilePath: './buildspec.yml',
+  // Either provide a buildspec.yml file OR fill out buildProps
+  // - providing a buildspec.yml will override buildProps and sourceProps.rootdir
+  // buildSpecFilePath: 'stack/buildspec.yml',
   buildProps: {
     runtime: 20, // nodejs version
     installcmd: "npm ci",
@@ -40,11 +42,7 @@ const appStackProps: SPAProps = {
   globalCertificateArn: 'arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-abcd-1234-abcd-1234abcd1234',
 
   // Custom Cloudfront Functions
-  edgeFunctionFilePath: './edge.js',
-
-  // Optional: functions
-  enableAnalytics: true,
-  enableAssetCleanup: true,
+  // edgeFunctionFilePath: 'stack/urlrewrite.js',
 
   // all resources created in the stack will be tagged
   // tags: {

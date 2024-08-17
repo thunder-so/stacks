@@ -12,9 +12,7 @@
     "vue": "^3.4.29"
   },
   "devDependencies": {
-    "@thunderso/stacks": "^0.1.2",
     "@vitejs/plugin-vue": "^5.0.5",
-    "aws-cdk-lib": "^2.148.1",
     "tsx": "^4.16.2",
     "typescript": "^5.2.2",
     "vite": "^5.3.1",

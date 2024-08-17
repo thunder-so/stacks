@@ -18,7 +18,6 @@ export interface HostingProps {
     domain?: string;
     globalCertificateArn?: string;
     hostedZoneId?: string;
-    enableAnalytics?: boolean;
 }
 
 export class HostingConstruct extends Construct {
@@ -71,10 +70,6 @@ export class HostingConstruct extends Construct {
 
       if(props.domain && props.globalCertificateArn && props.hostedZoneId) {
         this.createDnsRecords(props);
-      }
-
-      if (props.enableAnalytics) {
-
       }
     }
 

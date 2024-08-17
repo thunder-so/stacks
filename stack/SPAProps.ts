@@ -86,16 +86,6 @@ export interface SPAProps extends StackProps {
      * Optional. The ID of the hosted zone to create a DNS record for the specified domain.
      */
     readonly hostedZoneId?: string;
-      
-    /**
-     * Optional. Whether to provision Athena for CloudFront access logs analysis.
-     */
-    readonly enableAnalytics?: boolean;
-  
-    /**
-     * Optional. Whether to provision Lambda and EventBridge rule to cleanup stale static assets.
-     */
-    readonly enableAssetCleanup?: boolean;
 
 }
   
