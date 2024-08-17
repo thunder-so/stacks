@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import yaml from "yaml";
-// import dotenv from "dotenv";
 import { fileURLToPath } from 'url';
 import { Construct } from "constructs";
 import { Aws, Duration, RemovalPolicy, Stack, SecretValue, CfnParameter } from 'aws-cdk-lib';
@@ -38,7 +37,6 @@ export interface PipelineProps {
     buildcmd: string;
     outputdir: string;
   };
-  // buildEnvFilePath?: string;
   buildEnvironmentVariables?: Record<string, { value: string; type: BuildEnvironmentVariableType.PARAMETER_STORE }>
 }
 
@@ -70,11 +68,6 @@ export class PipelineConstruct extends Construct {
    * The build output bucket
    */
   public buildOutputBucket: IBucket;
-
-  /**
-   * Environment variables
-   */
-  // public environmentVariables: { [name: string]: any } = {};
 
 
   constructor(scope: Construct, id: string, props: PipelineProps) {

@@ -32,9 +32,8 @@ const appStackProps: StaticSiteProps = {
     installcmd: "npx pnpm i",
     buildcmd: "npx vitepress build docs",
     outputdir: "docs/.vitepress/dist/"
-  },
-
-  // buildEnvFilePath: '.env'
+  }
+  
 };
 
 new StaticSiteStack(new App(), `${appStackProps.application}-${appStackProps.service}-${appStackProps.environment}-stack`, appStackProps);

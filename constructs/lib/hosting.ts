@@ -46,9 +46,14 @@ export class HostingConstruct extends Construct {
     private s3Origin: S3Origin;
 
     /**
+     * The OAC constructs created for the S3 origin.
+     */
+    public originAccessControl: CfnOriginAccessControl|undefined;
+
+    /**
      * The CloudFront Edge Function
      */
-    private cloudFrontFunction: CloudFrontFunction
+    private cloudFrontFunction: CloudFrontFunction;
     
 
     constructor(scope: Construct, id: string, props: HostingProps) {
@@ -56,7 +61,6 @@ export class HostingConstruct extends Construct {
 
       this.resourceIdPrefix = `${props.application}-${props.service}-${props.environment}`;
 
-      // this.kv = this.createKV(props);
       this.createHostingBucket(props);
 
       if (props.edgeFunctionFilePath) {
@@ -288,8 +292,6 @@ export class HostingConstruct extends Construct {
             : {}),
         }
 
-        // this.distribution = new Distribution(this, distributionName, distributionProps);
-
         // Define the CloudFront distribution using `createCloudFrontDistributionForS3`
         const cloudFrontDistributionProps: CreateCloudFrontDistributionForS3Props = {
           sourceBucket: this.hostingBucket,
@@ -298,13 +300,11 @@ export class HostingConstruct extends Construct {
         };
 
         // Creating CloudFront distribution
+        // this.distribution = new Distribution(this, distributionName, distributionProps);
         const cloudFrontDistributionForS3Response: CreateCloudFrontDistributionForS3Response = createCloudFrontDistributionForS3(this, distributionName, cloudFrontDistributionProps);
 
         this.distribution = cloudFrontDistributionForS3Response.distribution;
-
-        // Attach the OriginAccessControl to the CloudFront Distribution, and remove the OriginAccessIdentity
-        // const l1CloudFrontDistribution = this.distribution.node.defaultChild as CfnDistribution;
-        // l1CloudFrontDistribution.addPropertyOverride('DistributionConfig.Origins.0.OriginAccessControlId', cloudFrontDistributionForS3Response.originAccessControl?.attrId);
+        this.originAccessControl = cloudFrontDistributionForS3Response.originAccessControl;
 
         // Grant CloudFront permission to get the objects from the s3 bucket origin
         this.hostingBucket.addToResourcePolicy(

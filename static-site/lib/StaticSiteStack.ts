@@ -60,7 +60,6 @@ export class StaticSiteStack extends Stack {
         buildcmd: props.buildProps?.buildcmd as string,
         outputdir: props.buildProps?.outputdir as string,
       },
-      // buildEnvFilePath: props.buildEnvFilePath as string,
       buildEnvironmentVariables: props.buildEnvironmentVariables as Record<string, { value: string; type: BuildEnvironmentVariableType.PARAMETER_STORE }>
     });
 
@@ -71,15 +70,6 @@ export class StaticSiteStack extends Stack {
      * Patch is needed because no native support from AWS.
      * https://github.com/aws/aws-cdk/issues/21771
      */
-    const oac = new CfnOriginAccessControl(this, "OAC", {
-      originAccessControlConfig: {
-        name: `${Aws.STACK_NAME}-oac`,
-        originAccessControlOriginType: "s3",
-        signingBehavior: "always",
-        signingProtocol: "sigv4",
-      },
-    });
-
     const cfnDistribution = hosting?.distribution.node.defaultChild as CfnDistribution;
     cfnDistribution.addOverride(
       "Properties.DistributionConfig.Origins.0.S3OriginConfig.OriginAccessIdentity",
@@ -87,7 +77,7 @@ export class StaticSiteStack extends Stack {
     );
     cfnDistribution.addPropertyOverride(
       "DistributionConfig.Origins.0.OriginAccessControlId",
-      oac.getAtt("Id")
+      hosting.originAccessControl?.getAtt("Id")
     );
 
     const comS3PolicyOverride = hosting?.hostingBucket.node.findChild("Policy").node.defaultChild as CfnBucketPolicy;

@@ -59,10 +59,12 @@ export interface StaticSiteProps extends StackProps {
     };
 
     /**
-     * If you have custom environments for build step, provide path to .env file
+     * If you have custom environments for build step, create Parameter Store variables as plaintext and use this format:
+     * Must be in the same region as your stack.
+     * 
+     *   MY_VARIABLE: { value: "/path-to/your-parameter" }
+     * 
      */
-    // readonly buildEnvFilePath?: string;
-
     readonly buildEnvironmentVariables?: Record<string, { value: string; }>;
 
     /**
