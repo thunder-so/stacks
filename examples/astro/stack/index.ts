@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { App } from "aws-cdk-lib";
-import { StaticSiteStack, type StaticSiteProps } from "../../../";
-// import { StaticSiteStack, type StaticSiteProps } from "@thunderso/cdk-spa";
+import { SPAStack, type SPAProps } from "../../../";
+// import { SPAStack, type SPAProps } from "@thunderso/cdk-spa";
 
-const appStackProps: StaticSiteProps = {
+const appStackProps: SPAProps = {
   env: {
     account: '665186350589',
     region: 'us-east-1'
@@ -49,4 +49,4 @@ const appStackProps: StaticSiteProps = {
 
 };
 
-new StaticSiteStack(new App(), `${appStackProps.application}-${appStackProps.service}-${appStackProps.environment}-stack`, appStackProps);
+new SPAStack(new App(), `${appStackProps.application}-${appStackProps.service}-${appStackProps.environment}-stack`, appStackProps);

@@ -1,7 +1,7 @@
 import {type StackProps} from "aws-cdk-lib";
 import { BuildEnvironmentVariableType } from "aws-cdk-lib/aws-codebuild";
 
-export interface StaticSiteProps extends StackProps {
+export interface SPAProps extends StackProps {
     /**
      * The AWS environment (account/region) where this stack will be deployed.
      */
@@ -96,7 +96,6 @@ export interface StaticSiteProps extends StackProps {
      * Optional. Whether to provision Lambda and EventBridge rule to cleanup stale static assets.
      */
     readonly enableAssetCleanup?: boolean;
-
 
 }
   

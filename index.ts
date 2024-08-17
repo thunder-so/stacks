@@ -1,2 +1,2 @@
-export { StaticSiteStack } from './stack/StaticSiteStack';
-export type { StaticSiteProps } from './stack/StaticSiteProps';
+export { SPAStack as SPAStack } from './stack/SPAStack';
+export type { SPAProps as SPAProps } from './stack/SPAProps';

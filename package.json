@@ -2,6 +2,7 @@
   "name": "@thunderso/cdk-spa",
   "version": "0.5.0",
   "description": "CDK Library for provisioning infrastructure for Single Page Applications.",
+  "tags": ["aws", "cdk", "spa", "typescript"],
   "type": "module",
   "main": "index.ts",
   "repository": {
@@ -19,6 +20,9 @@
     "build": "tsc -b .",
     "clean": "tsc -b --clean",
     "watch": "tsc -b -w"
+  },
+  "bin": {
+    "cdk-spa-init": "cdk-spa-init.mjs"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

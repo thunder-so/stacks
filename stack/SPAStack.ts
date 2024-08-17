@@ -1,13 +1,13 @@
 import { Aws, ArnFormat, Stack } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { ApplicationConstruct, EnvironmentConstruct, HostingConstruct, PipelineConstruct } from '../lib';
-import type { StaticSiteProps } from './StaticSiteProps'; 
+import type { SPAProps } from './SPAProps'; 
 import { BuildEnvironmentVariableType } from 'aws-cdk-lib/aws-codebuild';
 import { CfnDistribution, CfnOriginAccessControl } from "aws-cdk-lib/aws-cloudfront";
 import { CfnBucketPolicy } from "aws-cdk-lib/aws-s3";
 
-export class StaticSiteStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StaticSiteProps) {
+export class SPAStack extends Stack {
+  constructor(scope: Construct, id: string, props?: SPAProps) {
     super(scope, id, props);
 
     // Check mandatory properties
