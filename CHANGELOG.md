@@ -16,16 +16,8 @@ All notable changes to this project will be documented in this file.
 
 - 
 
-## [1.1.1] - 2023-03-05
-
-### Added
-
--
+## [0.5.1] - 2024-08-18
 
 ### Changed
 
-- 
-
-### Removed
-
-- 
+- Using the OriginAccesscontrol provided by solutions construct instead

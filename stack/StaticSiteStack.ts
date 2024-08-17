@@ -1,6 +1,6 @@
 import { Aws, ArnFormat, Stack } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { ApplicationConstruct, EnvironmentConstruct, HostingConstruct, PipelineConstruct } from '../../constructs';
+import { ApplicationConstruct, EnvironmentConstruct, HostingConstruct, PipelineConstruct } from '../lib';
 import type { StaticSiteProps } from './StaticSiteProps'; 
 import { BuildEnvironmentVariableType } from 'aws-cdk-lib/aws-codebuild';
 import { CfnDistribution, CfnOriginAccessControl } from "aws-cdk-lib/aws-cloudfront";

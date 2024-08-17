@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { App } from "aws-cdk-lib";
-import { StaticSiteStack, type StaticSiteProps } from "../../../stacks/static-site";
-// import { StaticSiteStack, type StaticSiteProps } from "@thunderso/stacks/static-site";
+import { StaticSiteStack, type StaticSiteProps } from "../../";
+// import { StaticSiteStack, type StaticSiteProps } from "@thunderso/cdk-spa";
 
 const appStackProps: StaticSiteProps = {
   env: {
