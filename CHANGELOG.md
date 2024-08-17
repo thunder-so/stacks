@@ -16,7 +16,13 @@ All notable changes to this project will be documented in this file.
 
 - 
 
-## [0.5.1] - 2024-08-18
+## [0.6.1] - 2024-08-18
+
+### Changed
+
+- added shelljs
+
+## [0.6.0] - 2024-08-18
 
 ### Changed
 
