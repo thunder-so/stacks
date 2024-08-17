@@ -50,7 +50,7 @@ export class SPAStack extends Stack {
         owner: props.sourceProps?.owner, 
         repo: props.sourceProps?.repo, 
         branchOrRef: props.sourceProps?.branchOrRef, 
-        rootdir: props.sourceProps?.rootdir ? props.sourceProps?.rootdir : ''
+        rootdir: props.sourceProps?.rootdir as string
       },
       githubAccessTokenArn: props.githubAccessTokenArn as string,
       buildSpecFilePath: props.buildSpecFilePath as string,

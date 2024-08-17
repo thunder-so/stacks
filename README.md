@@ -304,7 +304,8 @@ const appStackProps: SPAProps = {
   sourceProps: {
     owner: 'your-github-username',
     repo: 'your-repo-name',
-    branchOrRef: 'main'
+    branchOrRef: 'main',
+    rootdir: ''
   },
 
   // Auto deployment
@@ -312,13 +313,14 @@ const appStackProps: SPAProps = {
   // - store in Secrets Manager as plaintext
   githubAccessTokenArn: 'arn:aws:secretsmanager:us-east-1:123456789012:secret/github-token',
 
-  // Either provide a buildspec.yml file OR leave empty and fill out buildProps
+  // Either provide a buildspec.yml file OR fill out buildProps
+  // - providing a buildspec.yml will override buildProps and sourceProps.rootdir
   buildSpecFilePath: './buildspec.yml',
   buildProps: {
     runtime: 20, // nodejs versions 16, 18 and 20 supported
-    installcmd: "npm ci",
-    buildcmd: "npm run build",
-    outputDir: "dist"
+    installcmd: 'npm ci',
+    buildcmd: 'npm run build',
+    outputDir: 'dist/'
   },
 
   // Custom CloudFront Functions for URL rewrite

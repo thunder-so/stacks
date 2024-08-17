@@ -16,7 +16,7 @@ const appStackProps: SPAProps = {
     owner: 'your-github-username',
     repo: 'your-repo-name',
     branchOrRef: 'main',
-    rootdir: '.'
+    rootdir: ''
   },
 
   // Auto deployment
@@ -28,10 +28,10 @@ const appStackProps: SPAProps = {
   // - providing a buildspec.yml will override buildProps and sourceProps.rootdir
   // buildSpecFilePath: 'stack/buildspec.yml',
   buildProps: {
-    runtime: 20, // nodejs version
-    installcmd: "npm ci",
-    buildcmd: "npm run build",
-    outputDir: "dist"
+    runtime: 20, // nodejs versions 16, 18 and 20 supported
+    installcmd: 'npm ci',
+    buildcmd: 'npm run build',
+    outputdir: 'dist/'
   },
 
   // Optional: Domain settings

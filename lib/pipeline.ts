@@ -232,8 +232,7 @@ export class PipelineConstruct extends Construct {
                     nodejs: props.buildProps?.runtime || '20'
                 },
                 commands: [ 
-                  'echo "VITE_URL: $VITE_URL"',
-                  `cd ${props.sourceProps?.rootdir || '.'}`,
+                  `cd ${props.sourceProps?.rootdir || './'}`,
                   props.buildProps?.installcmd || 'npm install'
                 ]
             },
