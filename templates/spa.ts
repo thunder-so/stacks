@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { App } from "aws-cdk-lib";
 import { SPAStack, type SPAProps } from "@thunderso/cdk-spa";
 

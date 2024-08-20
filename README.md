@@ -1,5 +1,5 @@
 # CDK-SPA
-Deploy any client-only SPA (single page application) on AWS using CDK.
+Install any client-only SPA (single page application) on AWS with automatic deployment.
 
 - Fast responses from [CloudFront](https://aws.amazon.com/cloudfront/)
 - Automatic upload of the build files for CSR and static assets to [S3](https://aws.amazon.com/s3/) with optimized caching rules
@@ -21,7 +21,7 @@ Install the package and its required dependencies:
 npm i @thunderso/cdk-spa --save-dev
 ```
 
-If you do not have already, your `package.json` must also contain `tsx` and this specific version of `aws-cdk-lib` :
+Your `package.json` must also contain `tsx` and this specific version of `aws-cdk-lib` :
 
 ```bash
 npm i tsx aws-cdk-lib@2.150.0 --save-dev
@@ -41,7 +41,7 @@ npx cdk-spa-init
 
 1. [Create a Github Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for your Github account. This token must be kept secure.
 
-2. [Create a Secrets Manager secret](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) with the Personal Access Token you created earlier. Note the `ARN` of the secret. E.g. `arn:aws:secretsmanager:<REGION_NAME>:<ACCOUNT_ID>:secret:<secret-name>`.
+2. [Create a Secrets Manager secret](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) as `plaintext` with the Personal Access Token you created earlier. Note the `ARN` of the secret. E.g. `arn:aws:secretsmanager:<REGION_NAME>:<ACCOUNT_ID>:secret:<secret-name>`.
 
 3. Input the noted `ARN` to the `githubAccessTokenArn` field in your stack.
 
@@ -119,7 +119,7 @@ The `SPAStack` construct can be configured via the following props:
       <th>
         <code>string</code>
       </th>
-      <td><strong>Required</strong>. A string to identify the environment of the app. This enables us to deploy multiple different environments of the same app, e.g., production and development.
+      <td><strong>Required</strong>. A string to identify the environment of the app. This enables us to deploy multiple different environments of the same app, e.g., prod, dev.
       </td>
     </tr>
     <tr><td colspan=3><small>Source, build and deploy:</small></td></tr>
@@ -287,7 +287,6 @@ Create a `stack` directory in your project root and an empty file `index.ts` and
 > Use different filenames such as `production.ts` and `testing.ts` for environments.
 
 ```ts
-#!/usr/bin/env node
 import { App } from "aws-cdk-lib";
 import { SPAStack, type SPAProps } from "@thunderso/cdk-spa";
 
@@ -315,7 +314,7 @@ const appStackProps: SPAProps = {
 
   // Either provide a buildspec.yml file OR fill out buildProps
   // - providing a buildspec.yml will override buildProps and sourceProps.rootdir
-  buildSpecFilePath: './buildspec.yml',
+  // buildSpecFilePath: 'stack/buildspec.yml',
   buildProps: {
     runtime: 20, // nodejs versions 16, 18 and 20 supported
     installcmd: 'npm ci',
@@ -352,7 +351,7 @@ npx cdk deploy --require-approval never --all --app="npx tsx stack/index.ts"
 
 Cloudfront edge functions can be used for URL rewrite, among other use-cases.
 
-> [!IMPORTANT]
+> [!NOTE]
 > Check out the resources from [aws-samples/amazon-cloudfront-functions](https://github.com/aws-samples/amazon-cloudfront-functions) for examples.
 
 

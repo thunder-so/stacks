@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import shell from "shelljs";
 import path from "path";
 import fs from "fs";

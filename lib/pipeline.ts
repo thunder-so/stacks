@@ -250,7 +250,9 @@ export class PipelineConstruct extends Construct {
     // environment variables
     const buildEnvironmentVariables = Object.entries(props.buildEnvironmentVariables || {}).reduce(
       (acc, [name, { value }]) => {
-        acc[name] = { value, type: BuildEnvironmentVariableType.PARAMETER_STORE };
+        if (typeof value === 'string') {
+          acc[name] = { value, type: BuildEnvironmentVariableType.PARAMETER_STORE };
+        }
         return acc;
       },
       {} as Record<string, { value: string; type: BuildEnvironmentVariableType.PARAMETER_STORE }>
