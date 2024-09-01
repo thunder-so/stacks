@@ -1,7 +1,5 @@
 import fs from 'fs';
-import path from 'path';
 import yaml from "yaml";
-import { fileURLToPath } from 'url';
 import { Construct } from "constructs";
 import { Aws, Duration, RemovalPolicy, Stack, SecretValue, CfnParameter } from 'aws-cdk-lib';
 import { PolicyStatement, Effect, ArnPrincipal, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
@@ -9,7 +7,6 @@ import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncrypt
 import { Artifacts, GitHubSourceCredentials, Project, PipelineProject, LinuxBuildImage, LinuxArmBuildImage, ComputeType, Source, BuildSpec, BuildEnvironmentVariable, BuildEnvironmentVariableType } from "aws-cdk-lib/aws-codebuild";
 import { Artifact, Pipeline, PipelineType, StageProps } from 'aws-cdk-lib/aws-codepipeline';
 import { GitHubSourceAction, GitHubTrigger, CodeBuildAction, S3DeployAction, LambdaInvokeAction } from 'aws-cdk-lib/aws-codepipeline-actions';
-import { Function, Runtime, Code } from 'aws-cdk-lib/aws-lambda';
 import { IDistribution } from 'aws-cdk-lib/aws-cloudfront';
 
 export interface PipelineProps {

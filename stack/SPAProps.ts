@@ -1,5 +1,4 @@
 import {type StackProps} from "aws-cdk-lib";
-import { BuildEnvironmentVariableType } from "aws-cdk-lib/aws-codebuild";
 
 export interface SPAProps extends StackProps {
     /**
