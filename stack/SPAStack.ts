@@ -45,7 +45,9 @@ export class SPAStack extends Stack {
       Distribution: hosting.distribution,
       application: props.application,
       environment: props.environment,
+      environmentId: props.environmentId as string,
       service: props.service,
+      serviceId: props.serviceId as string,
       sourceProps: {
         owner: props.sourceProps?.owner, 
         repo: props.sourceProps?.repo, 

@@ -18,8 +18,12 @@ export interface PipelineProps {
   Distribution: IDistribution;
 
   application: string;
+  
   service: string;
+  serviceId: string,
+
   environment: string;
+  environmentId: string,
 
   // source
   sourceProps: {
@@ -472,15 +476,15 @@ export class PipelineConstruct extends Construct {
     // });
   
     // Create a rule to capture stage execution events
-    const rule = new Rule(this, 'StageExecutionRule', {
+    const rule = new Rule(this, 'ExecutionRule', {
       // eventBus: eventBus,
-      ruleName: `${this.resourceIdPrefix}-events-rule`,
+      ruleName: `${this.resourceIdPrefix}-events`,
       eventPattern: {
         source: ['aws.codepipeline'],
-        detailType: ['CodePipeline Stage Execution State Change'],
+        detailType: ['CodePipeline Pipeline Execution State Change'],
         detail: {
           pipeline: [this.codePipeline.pipelineName],
-          state: ["STARTED", "SUCCEEDED", "FAILED"],
+          state: ["STARTED", "SUCCEEDED", "RESUMED", "FAILED", "CANCELED", "SUPERSEDED"],
         },
       },
     });
@@ -493,12 +497,14 @@ export class PipelineConstruct extends Construct {
     // Add the Lambda function as a target with custom input
     rule.addTarget(new LambdaFunction(target, {
       event: RuleTargetInput.fromObject({
-        service: props.service,
-        environment: props.environment,
+        eventId: EventField.fromPath('$.id'),
+        account: EventField.fromPath('$.account'),
+        region: EventField.fromPath('$.region'),
+        time: EventField.fromPath('$.time'),
+        environmentId: props.environmentId,
+        serviceId: props.serviceId,
         detail: {
-          pipeline: EventField.fromPath('$.detail.pipeline'),
           executionId: EventField.fromPath('$.detail.execution-id'),
-          stage: EventField.fromPath('$.detail.stage'),
           state: EventField.fromPath('$.detail.state')
         }
       }),

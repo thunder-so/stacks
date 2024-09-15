@@ -8,8 +8,11 @@ const appStackProps: SPAProps = {
     region: 'us-east-1'
   },
   application: 'examples',
+
   service: 'astro',
+  serviceId: 'cly3wc6lb000312941gk0xres',
   environment: 'prod',
+  environmentId: 'cly3wc4v600011294c9y38kkm',
 
   // Your Github repository url contains https://github.com/<owner>/<repo>
   sourceProps: {
