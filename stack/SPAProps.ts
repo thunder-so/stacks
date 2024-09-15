@@ -86,5 +86,10 @@ export interface SPAProps extends StackProps {
      */
     readonly hostedZoneId?: string;
 
+    /**
+     * Optional. Broadcast the pipeline events to an EventBridge event bus. Provide ARN.
+     */
+    readonly eventArn?: string
+
 }
   

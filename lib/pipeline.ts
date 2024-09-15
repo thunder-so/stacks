@@ -4,10 +4,13 @@ import { Construct } from "constructs";
 import { Aws, Duration, RemovalPolicy, Stack, SecretValue, CfnParameter } from 'aws-cdk-lib';
 import { PolicyStatement, Effect, ArnPrincipal, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
-import { Artifacts, GitHubSourceCredentials, Project, PipelineProject, LinuxBuildImage, LinuxArmBuildImage, ComputeType, Source, BuildSpec, BuildEnvironmentVariable, BuildEnvironmentVariableType } from "aws-cdk-lib/aws-codebuild";
-import { Artifact, Pipeline, PipelineType, StageProps } from 'aws-cdk-lib/aws-codepipeline';
-import { GitHubSourceAction, GitHubTrigger, CodeBuildAction, S3DeployAction, LambdaInvokeAction } from 'aws-cdk-lib/aws-codepipeline-actions';
+import { Project, LinuxBuildImage, ComputeType, Source, BuildSpec, BuildEnvironmentVariable, BuildEnvironmentVariableType } from "aws-cdk-lib/aws-codebuild";
+import { Artifact, Pipeline, PipelineType } from 'aws-cdk-lib/aws-codepipeline';
+import { GitHubSourceAction, GitHubTrigger, CodeBuildAction, S3DeployAction } from 'aws-cdk-lib/aws-codepipeline-actions';
 import { IDistribution } from 'aws-cdk-lib/aws-cloudfront';
+import { EventBus, Rule } from 'aws-cdk-lib/aws-events';
+import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
+import { Function as LambdaFunctionImport } from 'aws-cdk-lib/aws-lambda';
 
 export interface PipelineProps {
   HostingBucket: IBucket;
@@ -35,6 +38,9 @@ export interface PipelineProps {
     outputdir: string;
   };
   buildEnvironmentVariables?: Record<string, { value: string; type: BuildEnvironmentVariableType.PARAMETER_STORE }>
+
+  // events
+  eventArn: string;
 }
 
 export class PipelineConstruct extends Construct {
@@ -88,6 +94,11 @@ export class PipelineConstruct extends Construct {
   
     // create pipeline
     this.codePipeline = this.createPipeline(props);
+
+    // Check if eventBusArn is provided and create events broadcast
+    if (props.eventArn) {
+      this.createEventsBroadcast(props);
+    }
 
   }
 
@@ -446,4 +457,39 @@ export class PipelineConstruct extends Construct {
     // return our pipeline
     return pipeline;
   }
+
+
+  /**
+   * Create Events Broadcast
+   * @param eventArn 
+   */
+  private createEventsBroadcast(props: PipelineProps) {
+    // Create an EventBridge event bus
+    const eventBus = new EventBus(this, 'EventBus', {
+      eventBusName: `${this.resourceIdPrefix}-pipeline-events`,
+    });
+  
+    // Create a rule to capture stage execution events
+    new Rule(this, 'StageExecutionRule', {
+      eventBus: eventBus,
+      eventPattern: {
+        source: ['aws.codepipeline'],
+        detailType: ['CodePipeline Stage Execution State Change'],
+        detail: {
+          pipeline: [this.codePipeline.pipelineName],
+          // state: [
+          //   "STARTED",
+          //   "SUCCEEDED",
+          //   "FAILED",
+          // ]
+        },
+      },
+      targets: [
+        new LambdaFunction(
+          LambdaFunctionImport.fromFunctionArn(this, 'TargetLambda', props.eventArn)
+        ),
+      ],
+    });
+  }
+
 }

@@ -14,7 +14,7 @@ const appStackProps: SPAProps = {
   // Your Github repository url contains https://github.com/<owner>/<repo>
   sourceProps: {
     owner: 'thunder-so',
-    repo: 'stacks',
+    repo: 'cdk-spa',
     branchOrRef: 'main',
     rootdir: 'examples/astro/'
   },
@@ -41,11 +41,11 @@ const appStackProps: SPAProps = {
     VITE_URL: { value: '/thunder/examples/astro' }
   },
 
-  domain: 'astro.thunder.so',
-  globalCertificateArn: 'arn:aws:acm:us-east-1:665186350589:certificate/d7c10cb1-d3fb-4547-b6ba-1717f20a25cf',
-  hostedZoneId: 'Z04172542KY36VFH88DJJ', // thunder.so
+  // domain: 'astro.thunder.so',
+  // globalCertificateArn: 'arn:aws:acm:us-east-1:665186350589:certificate/d7c10cb1-d3fb-4547-b6ba-1717f20a25cf',
+  // hostedZoneId: 'Z04172542KY36VFH88DJJ', // thunder.so
 
-
+  eventArn: "arn:aws:lambda:us-east-1:665186350589:function:WatcherFunction-sandbox"
 };
 
 new SPAStack(new App(), `${appStackProps.application}-${appStackProps.service}-${appStackProps.environment}-stack`, appStackProps);

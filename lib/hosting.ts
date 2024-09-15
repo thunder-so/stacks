@@ -4,11 +4,11 @@ import { Construct } from "constructs";
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { PolicyStatement, Effect, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { HttpOrigin, S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
-import { CfnDistribution, Distribution, type IDistribution, CachePolicy, SecurityPolicyProtocol, HttpVersion, PriceClass, ResponseHeadersPolicy, HeadersFrameOption, HeadersReferrerPolicy, BehaviorOptions, AllowedMethods, ViewerProtocolPolicy, CacheCookieBehavior, CacheHeaderBehavior, CacheQueryStringBehavior, CfnOriginAccessControl, Function as CloudFrontFunction, FunctionCode as CloudFrontFunctionCode, FunctionEventType, OriginAccessIdentity, CachedMethods } from "aws-cdk-lib/aws-cloudfront";
+import { CfnDistribution, Distribution, type IDistribution, CachePolicy, SecurityPolicyProtocol, HttpVersion, PriceClass, ResponseHeadersPolicy, HeadersFrameOption, HeadersReferrerPolicy, type BehaviorOptions, AllowedMethods, ViewerProtocolPolicy, CacheCookieBehavior, CacheHeaderBehavior, CacheQueryStringBehavior, CfnOriginAccessControl, Function as CloudFrontFunction, FunctionCode as CloudFrontFunctionCode, FunctionEventType, OriginAccessIdentity, CachedMethods } from "aws-cdk-lib/aws-cloudfront";
 import { AaaaRecord, ARecord, HostedZone, type IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { CloudFrontTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
-import { createCloudFrontDistributionForS3, CreateCloudFrontDistributionForS3Props, CreateCloudFrontDistributionForS3Response } from '@aws-solutions-constructs/core'
+import { createCloudFrontDistributionForS3, type CreateCloudFrontDistributionForS3Props, type CreateCloudFrontDistributionForS3Response } from '@aws-solutions-constructs/core'
 
 export interface HostingProps {
     application: string;

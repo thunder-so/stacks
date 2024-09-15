@@ -60,7 +60,8 @@ export class SPAStack extends Stack {
         buildcmd: props.buildProps?.buildcmd as string,
         outputdir: props.buildProps?.outputdir as string,
       },
-      buildEnvironmentVariables: props.buildEnvironmentVariables as Record<string, { value: string; type: BuildEnvironmentVariableType.PARAMETER_STORE }>
+      buildEnvironmentVariables: props.buildEnvironmentVariables as Record<string, { value: string; type: BuildEnvironmentVariableType.PARAMETER_STORE }>,
+      eventArn: props.eventArn as string
     });
 
     /**
