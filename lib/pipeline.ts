@@ -8,9 +8,10 @@ import { Project, LinuxBuildImage, ComputeType, Source, BuildSpec, BuildEnvironm
 import { Artifact, Pipeline, PipelineType } from 'aws-cdk-lib/aws-codepipeline';
 import { GitHubSourceAction, GitHubTrigger, CodeBuildAction, S3DeployAction } from 'aws-cdk-lib/aws-codepipeline-actions';
 import { IDistribution } from 'aws-cdk-lib/aws-cloudfront';
-import { EventBus, Rule } from 'aws-cdk-lib/aws-events';
-import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
-import { Function as LambdaFunctionImport } from 'aws-cdk-lib/aws-lambda';
+import { EventBus, Rule, RuleTargetInput, EventField } from 'aws-cdk-lib/aws-events';
+import { LambdaFunction, CloudWatchLogGroup } from 'aws-cdk-lib/aws-events-targets';
+import { Function } from 'aws-cdk-lib/aws-lambda';
+import { LogGroup } from 'aws-cdk-lib/aws-logs';
 
 export interface PipelineProps {
   HostingBucket: IBucket;
@@ -464,32 +465,44 @@ export class PipelineConstruct extends Construct {
    * @param eventArn 
    */
   private createEventsBroadcast(props: PipelineProps) {
-    // Create an EventBridge event bus
-    const eventBus = new EventBus(this, 'EventBus', {
-      eventBusName: `${this.resourceIdPrefix}-pipeline-events`,
-    });
+    // Create a CloudWatch Log Group for debugging
+    // const logGroup = new LogGroup(this, 'EventBusLogGroup', {
+    //   logGroupName: `/aws/events/${this.resourceIdPrefix}-pipeline-events`,
+    //   removalPolicy: RemovalPolicy.DESTROY,
+    // });
   
     // Create a rule to capture stage execution events
-    new Rule(this, 'StageExecutionRule', {
-      eventBus: eventBus,
+    const rule = new Rule(this, 'StageExecutionRule', {
+      // eventBus: eventBus,
+      ruleName: `${this.resourceIdPrefix}-events-rule`,
       eventPattern: {
         source: ['aws.codepipeline'],
         detailType: ['CodePipeline Stage Execution State Change'],
         detail: {
           pipeline: [this.codePipeline.pipelineName],
-          // state: [
-          //   "STARTED",
-          //   "SUCCEEDED",
-          //   "FAILED",
-          // ]
+          state: ["STARTED", "SUCCEEDED", "FAILED"],
         },
       },
-      targets: [
-        new LambdaFunction(
-          LambdaFunctionImport.fromFunctionArn(this, 'TargetLambda', props.eventArn)
-        ),
-      ],
     });
+
+    // Find the target and set up rule
+    const target = Function.fromFunctionArn(this, 'target', props.eventArn);
+    // rule.addTarget(new LambdaFunction(target));
+    // rule.addTarget(new CloudWatchLogGroup(logGroup));
+
+    // Add the Lambda function as a target with custom input
+    rule.addTarget(new LambdaFunction(target, {
+      event: RuleTargetInput.fromObject({
+        service: props.service,
+        environment: props.environment,
+        detail: {
+          pipeline: EventField.fromPath('$.detail.pipeline'),
+          executionId: EventField.fromPath('$.detail.execution-id'),
+          stage: EventField.fromPath('$.detail.stage'),
+          state: EventField.fromPath('$.detail.state')
+        }
+      }),
+    }));
   }
 
 }
