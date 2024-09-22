@@ -470,10 +470,10 @@ export class PipelineConstruct extends Construct {
    */
   private createEventsBroadcast(props: PipelineProps) {
     // Create a CloudWatch Log Group for debugging
-    // const logGroup = new LogGroup(this, 'EventBusLogGroup', {
-    //   logGroupName: `/aws/events/${this.resourceIdPrefix}-pipeline-events`,
-    //   removalPolicy: RemovalPolicy.DESTROY,
-    // });
+    const logGroup = new LogGroup(this, 'EventBusLogGroup', {
+      logGroupName: `/aws/events/${this.resourceIdPrefix}-pipeline`,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
   
     // Create a rule to capture stage execution events
     const rule = new Rule(this, 'ExecutionRule', {
