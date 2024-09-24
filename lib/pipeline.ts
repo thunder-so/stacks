@@ -493,7 +493,9 @@ export class PipelineConstruct extends Construct {
 
     // Find the target and set up rule
     const target = Function.fromFunctionArn(this, 'target', props.eventArn);
-    // rule.addTarget(new CloudWatchLogGroup(logGroup));
+    
+    // Add the log group as a target
+    rule.addTarget(new CloudWatchLogGroup(logGroup));
 
     // Add the Lambda function as a target with custom input
     rule.addTarget(new LambdaFunction(target, {
