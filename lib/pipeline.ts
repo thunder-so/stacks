@@ -497,24 +497,15 @@ export class PipelineConstruct extends Construct {
     // Add the log group as a target
     rule.addTarget(new CloudWatchLogGroup(logGroup));
 
-    // Add the Lambda function as a target with custom input
+    // Add the Lambda function as a target with event
     rule.addTarget(new LambdaFunction(target, {
       event: RuleTargetInput.fromObject({
-        eventId: EventField.fromPath('$.id'),
-        account: EventField.fromPath('$.account'),
-        region: EventField.fromPath('$.region'),
-        time: EventField.fromPath('$.time'),
         environmentId: props.environmentId,
         serviceId: props.serviceId,
-        detail: {
-          executionId: EventField.fromPath('$.detail.execution-id'),
-          state: EventField.fromPath('$.detail.state'),
-          commitId: EventField.fromPath('$.detail.execution-trigger.commit-id'),
-          commitMessage: EventField.fromPath('$.detail.execution-trigger.commit-message'),
-          commitAuthor: EventField.fromPath('$.detail.execution-trigger.author-display-name'),
-        }
-      }),
+        metadata: EventField.fromPath('$')
+      })
     }));
+
   }
 
 }
