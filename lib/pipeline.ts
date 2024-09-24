@@ -474,6 +474,8 @@ export class PipelineConstruct extends Construct {
       logGroupName: `/aws/events/${this.resourceIdPrefix}-pipeline`,
       removalPolicy: RemovalPolicy.DESTROY,
     });
+
+    logGroup.grantWrite(this.codePipeline.role);
   
     // Create a rule to capture stage execution events
     const rule = new Rule(this, 'ExecutionRule', {
@@ -491,7 +493,6 @@ export class PipelineConstruct extends Construct {
 
     // Find the target and set up rule
     const target = Function.fromFunctionArn(this, 'target', props.eventArn);
-    // rule.addTarget(new LambdaFunction(target));
     // rule.addTarget(new CloudWatchLogGroup(logGroup));
 
     // Add the Lambda function as a target with custom input
