@@ -20,7 +20,10 @@ const {
   buildEnvironmentVariables,
   domain,
   globalCertificateArn,
-  hostedZoneId
+  hostedZoneId,
+  eventArn,
+  environmentId,
+  serviceId
 } = metadata;
 
 const appStackProps: SPAProps = {
@@ -47,7 +50,10 @@ const appStackProps: SPAProps = {
   buildEnvironmentVariables,
   domain,
   globalCertificateArn,
-  hostedZoneId
+  hostedZoneId,
+  eventArn,
+  environmentId,
+  serviceId
 };
 
 new SPAStack(new App(), `${appStackProps.application}-${appStackProps.service}-${appStackProps.environment}-stack`, appStackProps);
