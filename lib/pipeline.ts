@@ -509,10 +509,9 @@ export class PipelineConstruct extends Construct {
         detail: {
           executionId: EventField.fromPath('$.detail.execution-id'),
           state: EventField.fromPath('$.detail.state'),
-          commitId: EventField.fromPath('$.detail.commit-id'),
-          commitMessage: EventField.fromPath('$.detail.commit-message'),
-          commitAuthor: EventField.fromPath('$.detail.commit-author'),
-          commitTime: EventField.fromPath('$.detail.commit-timestamp'),
+          commitId: EventField.fromPath('$.detail.execution-trigger.commit-id'),
+          commitMessage: EventField.fromPath('$.detail.execution-trigger.commit-message'),
+          commitAuthor: EventField.fromPath('$.detail.execution-trigger.author-display-name'),
         }
       }),
     }));
