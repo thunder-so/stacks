@@ -508,7 +508,11 @@ export class PipelineConstruct extends Construct {
         serviceId: props.serviceId,
         detail: {
           executionId: EventField.fromPath('$.detail.execution-id'),
-          state: EventField.fromPath('$.detail.state')
+          state: EventField.fromPath('$.detail.state'),
+          commitId: EventField.fromPath('$.detail.commit-id'),
+          commitMessage: EventField.fromPath('$.detail.commit-message'),
+          commitAuthor: EventField.fromPath('$.detail.commit-author'),
+          commitTime: EventField.fromPath('$.detail.commit-timestamp'),
         }
       }),
     }));
