@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Aws, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { Aws, Duration, RemovalPolicy, CfnOutput } from 'aws-cdk-lib';
 import { Construct } from "constructs";
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { PolicyStatement, Effect, ServicePrincipal } from "aws-cdk-lib/aws-iam";
@@ -71,6 +71,20 @@ export class HostingConstruct extends Construct {
       if(props.domain && props.globalCertificateArn && props.hostedZoneId) {
         this.createDnsRecords(props);
       }
+
+      // Create an output for the distribution's physical ID
+      new CfnOutput(this, 'DistributionId', {
+        value: this.distribution.distributionId,
+        description: 'The ID of the CloudFront distribution',
+        exportName: 'CloudFrontDistributionId',
+      });
+
+      // Create an output for the distribution's URL
+      new CfnOutput(this, 'DistributionUrl', {
+        value: `https://${this.distribution.distributionDomainName}`,
+        description: 'The URL of the CloudFront distribution',
+        exportName: 'CloudFrontDistributionUrl',
+      });
     }
 
     private createCloudFrontFunction(props: HostingProps): CloudFrontFunction {

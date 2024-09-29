@@ -1,7 +1,7 @@
 import fs from 'fs';
 import yaml from "yaml";
 import { Construct } from "constructs";
-import { Aws, Duration, RemovalPolicy, Stack, SecretValue, CfnParameter } from 'aws-cdk-lib';
+import { Aws, Duration, RemovalPolicy, CfnOutput, SecretValue, CfnParameter } from 'aws-cdk-lib';
 import { PolicyStatement, Effect, ArnPrincipal, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { Project, LinuxBuildImage, ComputeType, Source, BuildSpec, BuildEnvironmentVariable, BuildEnvironmentVariableType } from "aws-cdk-lib/aws-codebuild";
@@ -104,6 +104,13 @@ export class PipelineConstruct extends Construct {
     if (props.eventArn) {
       this.createEventsBroadcast(props);
     }
+
+    // Create an output for the pipeline's name
+    new CfnOutput(this, 'PipelineName', {
+      value: this.codePipeline.pipelineName,
+      description: 'The name of the CodePipeline pipeline',
+      exportName: 'CodePipelineName',
+    });
 
   }
 
@@ -477,7 +484,7 @@ export class PipelineConstruct extends Construct {
 
     logGroup.grantWrite(this.codePipeline.role);
   
-    // Create a rule to capture stage execution events
+    // Create a rule to capture execution events
     const rule = new Rule(this, 'ExecutionRule', {
       // eventBus: eventBus,
       ruleName: `${this.resourceIdPrefix}-events`,
@@ -491,13 +498,12 @@ export class PipelineConstruct extends Construct {
       },
     });
 
-    // Find the target and set up rule
-    const target = Function.fromFunctionArn(this, 'target', props.eventArn);
-    
     // Add the log group as a target
     rule.addTarget(new CloudWatchLogGroup(logGroup));
 
     // Add the Lambda function as a target with event
+    const target = Function.fromFunctionArn(this, 'target', props.eventArn);
+    
     rule.addTarget(new LambdaFunction(target, {
       event: RuleTargetInput.fromObject({
         environmentId: props.environmentId,
