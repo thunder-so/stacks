@@ -507,18 +507,22 @@ export class PipelineConstruct extends Construct {
       },
     });
 
-    // Add the log group as a target
-    rule.addTarget(new CloudWatchLogGroup(logGroup));
+    const eventTransformer = {
+      environmentId: props.environmentId,
+      serviceId: props.serviceId,
+      metadata: EventField.fromPath('$')
+    };
+
+    // Add the log group as a target with event transformation
+    rule.addTarget(new CloudWatchLogGroup(logGroup, {
+      logEvent: RuleTargetInput.fromObject(eventTransformer)
+    }));
 
     // Add the Lambda function as a target with event
     const target = Function.fromFunctionArn(this, 'target', props.eventArn);
     
     rule.addTarget(new LambdaFunction(target, {
-      event: RuleTargetInput.fromObject({
-        environmentId: props.environmentId,
-        serviceId: props.serviceId,
-        metadata: EventField.fromPath('$')
-      })
+      event: RuleTargetInput.fromObject(eventTransformer)
     }));
 
   }
