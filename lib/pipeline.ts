@@ -314,6 +314,15 @@ export class PipelineConstruct extends Construct {
       })
     );
 
+    // allow project to get SSM parameters
+    project.addToRolePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ["ssm:GetParameters"],
+        resources: ["arn:aws:ssm:*:*:parameter/*"]
+      })
+    );
+
     // Grant project permission to write files in output bucket
     this.buildOutputBucket.addToResourcePolicy(
       new PolicyStatement({
