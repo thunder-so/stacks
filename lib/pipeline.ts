@@ -109,7 +109,7 @@ export class PipelineConstruct extends Construct {
     new CfnOutput(this, 'PipelineName', {
       value: this.codePipeline.pipelineName,
       description: 'The name of the CodePipeline pipeline',
-      exportName: 'CodePipelineName',
+      exportName: `${this.resourceIdPrefix}-CodePipelineName`,
     });
 
   }
@@ -502,6 +502,7 @@ export class PipelineConstruct extends Construct {
         detailType: ['CodePipeline Pipeline Execution State Change'],
         detail: {
           pipeline: [this.codePipeline.pipelineName],
+          stage: ['Source', 'Build', 'Deploy'],
           state: ["STARTED", "SUCCEEDED", "RESUMED", "FAILED", "CANCELED", "SUPERSEDED"],
         },
       },

@@ -76,14 +76,14 @@ export class HostingConstruct extends Construct {
       new CfnOutput(this, 'DistributionId', {
         value: this.distribution.distributionId,
         description: 'The ID of the CloudFront distribution',
-        exportName: 'CloudFrontDistributionId',
+        exportName: `${this.resourceIdPrefix}-CloudFrontDistributionId`,
       });
 
       // Create an output for the distribution's URL
       new CfnOutput(this, 'DistributionUrl', {
         value: `https://${this.distribution.distributionDomainName}`,
         description: 'The URL of the CloudFront distribution',
-        exportName: 'CloudFrontDistributionUrl',
+        exportName: `${this.resourceIdPrefix}-CloudFrontDistributionUrl`,
       });
     }
 
