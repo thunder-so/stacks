@@ -4,12 +4,12 @@ import { Construct } from "constructs";
 import { Aws, Duration, RemovalPolicy, CfnOutput, SecretValue, CfnParameter } from 'aws-cdk-lib';
 import { PolicyStatement, Effect, ArnPrincipal, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { Bucket, type IBucket, BlockPublicAccess, ObjectOwnership, BucketEncryption } from "aws-cdk-lib/aws-s3";
-import { Project, LinuxBuildImage, ComputeType, Source, BuildSpec, BuildEnvironmentVariable, BuildEnvironmentVariableType } from "aws-cdk-lib/aws-codebuild";
-import { Artifact, Pipeline, PipelineType } from 'aws-cdk-lib/aws-codepipeline';
-import { GitHubSourceAction, GitHubTrigger, CodeBuildAction, S3DeployAction } from 'aws-cdk-lib/aws-codepipeline-actions';
+import { Project, PipelineProject, LinuxBuildImage, ComputeType, Source, BuildSpec, BuildEnvironmentVariable, BuildEnvironmentVariableType } from "aws-cdk-lib/aws-codebuild";
+import { Artifact, Pipeline, PipelineType, Variable } from 'aws-cdk-lib/aws-codepipeline';
+import { GitHubSourceAction, GitHubTrigger, CodeBuildAction, S3DeployAction, LambdaInvokeAction } from 'aws-cdk-lib/aws-codepipeline-actions';
 import { IDistribution } from 'aws-cdk-lib/aws-cloudfront';
 import { EventBus, Rule, RuleTargetInput, EventField } from 'aws-cdk-lib/aws-events';
-import { LambdaFunction, CloudWatchLogGroup } from 'aws-cdk-lib/aws-events-targets';
+import { LambdaFunction as LambdaFunctionEvent, CloudWatchLogGroup } from 'aws-cdk-lib/aws-events-targets';
 import { Function } from 'aws-cdk-lib/aws-lambda';
 import { LogGroup } from 'aws-cdk-lib/aws-logs';
 
@@ -68,9 +68,14 @@ export class PipelineConstruct extends Construct {
   private syncAction: Project;
 
   /**
-   * The commit reference hash
+   * The Pipeline SourceAction commit hash
    */
   private commitId: string;
+
+  /**
+   * The Pipeline BuildAction id
+   */
+  private buildId: string;
 
   /**
    * The build output bucket
@@ -143,6 +148,7 @@ export class PipelineConstruct extends Construct {
         build: {
           commands: [
             // 'echo "Commit ID: $COMMIT_ID"',
+            // 'echo "Build ID: $BUILD_ID"',
             // 'echo "Output Bucket: $OUTPUT_BUCKET"',
             // 'echo "Hosting Bucket: $HOSTING_BUCKET"',
             'aws s3 cp s3://$OUTPUT_BUCKET/$COMMIT_ID/ s3://$HOSTING_BUCKET/ --recursive --metadata revision=$COMMIT_ID',
@@ -152,7 +158,7 @@ export class PipelineConstruct extends Construct {
       },
     });
     
-    const project = new Project(this, 'SyncActionProject', {
+    const project = new PipelineProject(this, 'SyncActionProject', {
       projectName: `${this.resourceIdPrefix}-syncActionProject`,
       buildSpec: buildSpec,
       environment: {
@@ -164,7 +170,8 @@ export class PipelineConstruct extends Construct {
         CLOUDFRONT_DISTRIBUTION_ID: { value: props.Distribution.distributionId },
         HOSTING_BUCKET: { value: props.HostingBucket.bucketName },
         OUTPUT_BUCKET: { value: this.buildOutputBucket.bucketName },
-        COMMIT_ID: { value: this.commitId }
+        COMMIT_ID: { value: this.commitId },
+        BUILD_ID: { value: this.buildId }
       },
     });
 
@@ -246,6 +253,9 @@ export class PipelineConstruct extends Construct {
     } else {
       buildSpecYaml = BuildSpec.fromObject({
         version: '0.2',
+        env: {
+          'exported-variables': ['CODEBUILD_BUILD_ID']
+        },
         phases: {
             install: {
                 'runtime-versions': {
@@ -279,17 +289,10 @@ export class PipelineConstruct extends Construct {
     );
     
     // create the cloudbuild project
-    const project = new Project(this, "CodeBuildProject", {
+    const project = new PipelineProject(this, "CodeBuildProject", {
       projectName: `${this.resourceIdPrefix}-buildproject`,
       buildSpec: buildSpecYaml,
       timeout: Duration.minutes(10),
-      source: Source.gitHub({
-        cloneDepth: 1,
-        owner: props.sourceProps.owner,
-        repo: props.sourceProps.repo,
-        branchOrRef: props.sourceProps.branchOrRef,
-        // webhook: true
-      }),
       environment: {
         buildImage: LinuxBuildImage.STANDARD_7_0,
         computeType: ComputeType.MEDIUM,
@@ -300,7 +303,7 @@ export class PipelineConstruct extends Construct {
       environmentVariables: buildEnvironmentVariables,
       logging: {
         s3: {
-          bucket: buildLogsBucket,
+          bucket: buildLogsBucket
         }
       }
     });
@@ -357,7 +360,7 @@ export class PipelineConstruct extends Construct {
       autoDeleteObjects: true,
     });
 
-    // Setup CodePipeline
+    // setup the pipeline
     const pipeline = new Pipeline(this, "Pipeline", {
       artifactBucket: artifactBucket,
       pipelineName: `${this.resourceIdPrefix}-pipeline`,
@@ -440,6 +443,9 @@ export class PipelineConstruct extends Construct {
       actions: [buildAction],
     });
 
+    // extract the buildId from the buildAction
+    this.buildId = buildAction.variable('CODEBUILD_BUILD_ID');
+
     // Deploy Step
     const deployAction = new S3DeployAction({
       actionName: 'DeployAction',
@@ -466,14 +472,15 @@ export class PipelineConstruct extends Construct {
       input: buildOutput,
       runOrder: 4,
       environmentVariables: {
-        COMMIT_ID: { value: this.commitId }
+        COMMIT_ID: { value: this.commitId },
+        BUILD_ID: { value: this.buildId }
       }
     });
 
     pipeline.addStage({
       stageName: 'Deploy',
       actions: [deployAction, syncAction]
-    })
+    });
 
     // return our pipeline
     return pipeline;
@@ -502,7 +509,6 @@ export class PipelineConstruct extends Construct {
         detailType: ['CodePipeline Pipeline Execution State Change'],
         detail: {
           pipeline: [this.codePipeline.pipelineName],
-          stage: ['Source', 'Build', 'Deploy'],
           state: ["STARTED", "SUCCEEDED", "RESUMED", "FAILED", "CANCELED", "SUPERSEDED"],
         },
       },
@@ -522,7 +528,7 @@ export class PipelineConstruct extends Construct {
     // Add the Lambda function as a target with event
     const target = Function.fromFunctionArn(this, 'target', props.eventArn);
     
-    rule.addTarget(new LambdaFunction(target, {
+    rule.addTarget(new LambdaFunctionEvent(target, {
       event: RuleTargetInput.fromObject(eventTransformer)
     }));
 
