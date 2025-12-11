@@ -32,7 +32,6 @@
     "cdk-spa-destroy": "cli/cdk-spa-destroy.mjs"
   },
   "devDependencies": {
-    "@types/jest": "^30.0.0",
     "@types/node": "24.9.1",
     "aws-cdk": "2.1023.0",
     "ts-node": "^10.9.2",
@@ -45,5 +44,9 @@
     "shelljs": "^0.10.0",
     "source-map-support": "^0.5.21",
     "yaml": "^2.8.1"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
