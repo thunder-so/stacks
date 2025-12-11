@@ -22,16 +22,21 @@ RUN corepack enable && \
     corepack prepare yarn@stable --activate && \
     corepack prepare pnpm@latest --activate
 
+# Set default shell
 ENV SHELL=/bin/bash
 
 # Install Bun
 RUN curl -fsSL https://bun.sh/install | bash
 
+# Update PATH for bun
+ENV PATH="/root/.bun/bin:$PATH"
+
 # Verify everything works
 RUN node --version && \
     npm --version && \
     pnpm --version && \
-    yarn --version
+    yarn --version && \
+    bun --version
 
 RUN rm -rf /var/cache/apk/*
 
